@@ -126,22 +126,24 @@ Develop a web application that allows users to upload G-code files, apply the Br
 - [x] Provide job status tracking (pending, processing, completed, failed)
 - [x] Add `/status/{job_id}` endpoint to query job status
 
-##### 1.1.5 Implement Download Endpoint (Partial)
+##### 1.1.5 Implement Download Endpoint ✅
 
 - [x] Create `/download/{job_id}` endpoint
 - [x] Serve processed G-code file with streaming
 - [x] Add appropriate headers for download (Content-Disposition)
-- [ ] Implement cleanup after successful download
+- [x] Implement cleanup after successful download (remove original upload; retain processed output for re-download)
 - [x] Handle file not found errors gracefully
 
-##### 1.1.6 Temporary File Management (Partial)
+##### 1.1.6 Temporary File Management ✅
 
 - [x] Create temporary directory structure for uploads/outputs
 - [x] Store uploaded files temporarily with job ID naming
 - [x] Store processed files temporarily
-- [ ] Implement automatic cleanup (age-based or post-download)
+- [x] Implement automatic cleanup
+    - Post-download: remove original upload file
+    - Periodic: background cleanup task deletes files older than retention window
 - [x] Add security measures (prevent directory traversal, sanitize filenames)
-- [ ] Set up background task for periodic cleanup
+- [x] Set up background task for periodic cleanup
 
 #### 1.2 Frontend Development
 

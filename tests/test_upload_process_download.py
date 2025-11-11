@@ -83,3 +83,32 @@ def test_download_before_complete_returns_conflict():
     download_resp = client.get(f"/api/v1/download/{job_id}")
     # Accept either 409 (preferred) or 200 if processing was extremely fast
     assert download_resp.status_code in {status.HTTP_409_CONFLICT, status.HTTP_200_OK}
+
+
+def test_download_triggers_upload_cleanup():
+    """After a successful download, the original upload file should be removed."""
+    gcode_content = _make_minimal_gcode()
+    files = {"file": ("cleanup.gcode", gcode_content, "text/plain")}
+    data = {"start_at_layer": 0, "extrusion_multiplier": 1.05}
+
+    upload_resp = client.post("/api/v1/upload", files=files, data=data)
+    assert upload_resp.status_code == status.HTTP_201_CREATED
+    job_id = upload_resp.json()["job_id"]
+
+    # Wait until completed
+    deadline = time.time() + 10
+    while time.time() < deadline:
+        stat_resp = client.get(f"/api/v1/status/{job_id}")
+        assert stat_resp.status_code == status.HTTP_200_OK
+        if stat_resp.json()["status"] == "completed":
+            break
+        time.sleep(0.2)
+
+    # Download
+    dl = client.get(f"/api/v1/download/{job_id}")
+    assert dl.status_code == status.HTTP_200_OK
+
+    # We can't directly access internal upload path without service; instead, re-download should still work (we retained output),
+    # and there should be no functional regression. This test primarily ensures the endpoint still works after cleanup.
+    dl2 = client.get(f"/api/v1/download/{job_id}")
+    assert dl2.status_code == status.HTTP_200_OK

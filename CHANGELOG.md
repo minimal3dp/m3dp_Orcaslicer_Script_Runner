@@ -27,6 +27,12 @@ and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2
   - GET `/api/v1/download/{job_id}` streams processed G-code
     - Returns 409 if job not completed, 404 if job/file not found
     - Sets `Content-Disposition` with processed filename
+- Post-download cleanup implemented: original upload file is deleted upon successful download; processed output is retained for re-download and future retention policy.
+
+#### Temporary File Management ✅
+- Added `CleanupService` with background thread to delete files older than `FILE_RETENTION_HOURS` from `UPLOAD_DIR` and `OUTPUT_DIR`.
+- Wired service to FastAPI startup/shutdown to run periodically every `CLEANUP_INTERVAL_MINUTES`.
+- Exposed `run_once()` for direct invocation in tests.
 - Registered routers in `app/main.py` and `app/routers/__init__.py`
 
 #### Tests ✅

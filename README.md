@@ -67,12 +67,16 @@ Configure via environment variables (defaults in `app/config/settings.py`):
 - `PROCESSING_TIMEOUT` (seconds) – default 15 minutes
 - `MAX_CONCURRENT_JOBS` – default 5
 - `UPLOAD_DIR`, `OUTPUT_DIR` – default `temp/uploads`, `temp/outputs`
+- `FILE_RETENTION_HOURS` – age after which temp files are deleted by the cleanup task (default 24h)
+- `CLEANUP_INTERVAL_MINUTES` – how often the cleanup task runs (default 60m)
 - CORS settings via `CORS_ORIGINS`, `CORS_ALLOW_*`
 
 ## Notes and known gaps
 
 - Oversized files currently return `400 Bad Request`; docs reference `413 Payload Too Large`. This will be aligned in a follow-up.
-- Automatic cleanup (age-based and/or post-download) is not implemented yet.
+- Cleanup behavior:
+	- After a successful download, the original uploaded file is removed.
+	- A background cleanup task periodically deletes files older than `FILE_RETENTION_HOURS` from upload and output directories.
 
 ## License
 
