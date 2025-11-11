@@ -26,12 +26,16 @@ def test_processor():
     lines = test_gcode.strip().split("\n")
     output_lines = list(processor.process_gcode(lines))
 
+    # Assert processor works correctly
+    assert processor is not None, "Processor should be instantiated"
+    assert len(lines) > 0, "Input should have lines"
+    assert len(output_lines) > 0, "Output should have lines"
+    assert len(output_lines) >= len(lines), "Output should have at least as many lines as input"
+
     print("✓ Processor instantiated successfully")
     print(f"✓ Input lines: {len(lines)}")
     print(f"✓ Output lines: {len(output_lines)}")
     print("✓ Core module is functional!")
-
-    return True
 
 
 if __name__ == "__main__":

@@ -18,7 +18,70 @@ logger = logging.getLogger(__name__)
 @router.get(
     "/status/{job_id}",
     response_model=JobStatusResponse,
-    responses={404: {"model": ErrorResponse, "description": "Job not found"}},
+    responses={
+        200: {
+            "description": "Job status retrieved successfully",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "pending": {
+                            "summary": "Job pending",
+                            "value": {
+                                "job_id": "550e8400-e29b-41d4-a716-446655440000",
+                                "filename": "3DBenchy.gcode",
+                                "status": "pending",
+                                "created_at": "2025-11-11T10:30:00",
+                                "updated_at": "2025-11-11T10:30:00",
+                                "error": None,
+                            },
+                        },
+                        "processing": {
+                            "summary": "Job processing",
+                            "value": {
+                                "job_id": "550e8400-e29b-41d4-a716-446655440000",
+                                "filename": "3DBenchy.gcode",
+                                "status": "processing",
+                                "created_at": "2025-11-11T10:30:00",
+                                "updated_at": "2025-11-11T10:30:15",
+                                "error": None,
+                            },
+                        },
+                        "completed": {
+                            "summary": "Job completed",
+                            "value": {
+                                "job_id": "550e8400-e29b-41d4-a716-446655440000",
+                                "filename": "3DBenchy.gcode",
+                                "status": "completed",
+                                "created_at": "2025-11-11T10:30:00",
+                                "updated_at": "2025-11-11T10:30:45",
+                                "error": None,
+                            },
+                        },
+                        "failed": {
+                            "summary": "Job failed",
+                            "value": {
+                                "job_id": "550e8400-e29b-41d4-a716-446655440000",
+                                "filename": "3DBenchy.gcode",
+                                "status": "failed",
+                                "created_at": "2025-11-11T10:30:00",
+                                "updated_at": "2025-11-11T10:30:30",
+                                "error": "Processing timeout exceeded",
+                            },
+                        },
+                    }
+                }
+            },
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Job not found",
+            "content": {
+                "application/json": {
+                    "example": {"detail": {"error": "not_found", "message": "Job not found"}}
+                }
+            },
+        },
+    },
 )
 async def get_job_status(job_id: str) -> JobStatusResponse:
     """Return current status for a processing job."""
@@ -41,9 +104,74 @@ async def get_job_status(job_id: str) -> JobStatusResponse:
 @router.get(
     "/download/{job_id}",
     responses={
-        200: {"content": {"text/plain": {}}},
-        404: {"model": ErrorResponse, "description": "Job or file not found"},
-        409: {"model": ErrorResponse, "description": "Job not completed"},
+        200: {
+            "description": "Processed G-code file download",
+            "content": {
+                "text/plain": {
+                    "example": "; Processed by BrickLayers\nG1 X0 Y0 Z0.2 E1 F1800\n...",
+                }
+            },
+            "headers": {
+                "Content-Disposition": {
+                    "description": "Attachment with processed filename",
+                    "schema": {
+                        "type": "string",
+                        "example": 'attachment; filename="3DBenchy_processed.gcode"',
+                    },
+                }
+            },
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Job or file not found",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "job_not_found": {
+                            "summary": "Job does not exist",
+                            "value": {"detail": {"error": "not_found", "message": "Job not found"}},
+                        },
+                        "file_missing": {
+                            "summary": "Processed file missing",
+                            "value": {
+                                "detail": {
+                                    "error": "file_missing",
+                                    "message": "Processed file not found",
+                                }
+                            },
+                        },
+                    }
+                }
+            },
+        },
+        409: {
+            "model": ErrorResponse,
+            "description": "Job not completed",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "still_processing": {
+                            "summary": "Job still processing",
+                            "value": {
+                                "detail": {
+                                    "error": "not_ready",
+                                    "message": "Job status is processing, not ready for download",
+                                }
+                            },
+                        },
+                        "job_pending": {
+                            "summary": "Job not started",
+                            "value": {
+                                "detail": {
+                                    "error": "not_ready",
+                                    "message": "Job status is pending, not ready for download",
+                                }
+                            },
+                        },
+                    }
+                }
+            },
+        },
     },
 )
 async def download_processed_file(job_id: str):

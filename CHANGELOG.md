@@ -8,8 +8,31 @@ and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2
 ---
 
 ## [Unreleased]
+
+### Added
+- Comprehensive OpenAPI documentation with response examples for all endpoints
+  - Upload endpoint: 201, 400, 413, 422, 500 with detailed examples
+  - Status endpoint: 200 (pending, processing, completed, failed), 404 with examples
+  - Download endpoint: 200, 404, 409 with examples and headers documentation
+- Request validation test suite (`tests/test_upload_validation.py`)
+  - 12 new tests covering parameter validation, edge cases, and security
+  - Tests for invalid parameter ranges (negative layer, out-of-range multiplier)
+  - Tests for malformed requests (missing files, invalid extensions)
+  - Tests for security issues (path traversal, null bytes)
+  - Tests for edge cases (empty files, non-G-code content, boundary values)
+
+### Changed
+- Migrated from deprecated `@app.on_event` to modern FastAPI lifespan API
+  - Uses async context manager pattern for startup/shutdown
+  - Eliminates 4 deprecation warnings
+  - Improves cleanup guarantees
+- Updated `test_core.py` to use proper assertions instead of return statements
+  - Eliminates pytest warning about test functions returning non-None
+  - Adds explicit assertions for processor functionality
+
 ### Fixed
-- Align oversized file upload to return `413 Payload Too Large` instead of previous `400` response.
+- Align oversized file upload to return `413 Payload Too Large` instead of previous `400` response
+- Fixed all deprecation warnings in test suite (now 18 tests pass with 0 warnings)
 
 ## [1.1.5] - 2025-11-11
 

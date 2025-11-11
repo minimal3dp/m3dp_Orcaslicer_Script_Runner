@@ -147,25 +147,28 @@ Develop a web application that allows users to upload G-code files, apply the Br
 
 ##### 1.1.7 Backend Code Quality & Technical Debt
 
-- [ ] Migrate from deprecated `on_event` to FastAPI lifespan API for startup/shutdown
+- [x] Migrate from deprecated `on_event` to FastAPI lifespan API for startup/shutdown
     - Removes 4 deprecation warnings
     - Modern approach using async context managers
     - Better cleanup guarantees
-- [ ] Fix `test_core.py` to use assertions instead of return statements
+- [x] Fix `test_core.py` to use assertions instead of return statements
     - Removes pytest warning about test functions returning non-None
     - Proper test assertion pattern
-- [ ] Enhance OpenAPI documentation
+- [x] Enhance OpenAPI documentation
     - Add 413 response example to upload endpoint schema
-    - Include error response examples for all error codes
-    - Add request/response examples for happy paths
+    - Include error response examples for all error codes (400, 413, 422, 500)
+    - Add request/response examples for status endpoint (pending, processing, completed, failed)
+    - Add detailed download endpoint documentation with headers
+- [x] Add request validation tests
+    - Test invalid parameter ranges (negative start_at_layer, out-of-range multiplier)
+    - Test malformed requests (missing required fields)
+    - Test edge cases (empty filenames, special characters, path traversal, null bytes)
+    - Test valid boundary values
+    - 12 new validation tests added
 - [ ] Improve error handling consistency
     - Standardize error response format across all endpoints
     - Add error codes enum for client-side error handling
     - Consider problem details (RFC 7807) format
-- [ ] Add request validation tests
-    - Test invalid parameter ranges (negative start_at_layer, out-of-range multiplier)
-    - Test malformed requests (missing required fields)
-    - Test edge cases (empty filenames, special characters)
 - [ ] Optimize file handling
     - Consider streaming upload validation to avoid reading entire file into memory
     - Add chunked upload support for very large files
