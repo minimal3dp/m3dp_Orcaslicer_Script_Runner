@@ -9,41 +9,33 @@ the BrickLayers post-processing script, and downloading the results.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import get_settings
+from app.routers import health_router
+
+# Initialize settings
+settings = get_settings()
+
 # Create FastAPI application instance
 app = FastAPI(
-    title="BrickLayers Web Application",
+    title=settings.APP_NAME,
     description="Upload G-code files and apply BrickLayers post-processing",
-    version="0.1.0",
+    version=settings.APP_VERSION,
+    debug=settings.DEBUG,
 )
 
-# Configure CORS
+# Configure CORS with settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    allow_methods=settings.CORS_ALLOW_METHODS,
+    allow_headers=settings.CORS_ALLOW_HEADERS,
 )
 
-
-@app.get("/")
-async def root():
-    """Root endpoint - API health check"""
-    return {
-        "message": "BrickLayers Web Application API",
-        "version": "0.1.0",
-        "status": "online",
-    }
-
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint for monitoring"""
-    return {"status": "healthy"}
-
+# Include routers
+app.include_router(health_router)
 
 # TODO: Add routes for:
 # - File upload (/upload)
 # - Processing status (/status/{job_id})
 # - File download (/download/{job_id})
-# - Parameter configuration
