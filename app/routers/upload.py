@@ -1,13 +1,17 @@
-"""File upload endpoint."""
+"""File upload endpoint and processing queueing."""
 
+import logging
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile, status
 
 from app.models.processing import ErrorResponse
 from app.models.upload import UploadResponse, ValidationError
 from app.services.file_service import FileService, FileValidationError
+from app.services.processing_service import get_processing_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["upload"])
 
@@ -22,11 +26,12 @@ router = APIRouter(prefix="/api/v1", tags=["upload"])
     },
 )
 async def upload_file(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="G-code file to process"),
-    start_at_layer: int = Form(  # noqa: ARG001 - Will be used in Task 1.1.4
+    start_at_layer: int = Form(
         default=3, ge=0, description="Layer to start BrickLayers processing"
     ),
-    extrusion_multiplier: float = Form(  # noqa: ARG001 - Will be used in Task 1.1.4
+    extrusion_multiplier: float = Form(
         default=1.05,
         ge=1.0,
         le=1.2,
@@ -81,9 +86,22 @@ async def upload_file(
         await file.seek(0)
         _file_path, saved_size = file_service.save_upload(job_id, file.filename, file.file)
 
-        # TODO: Queue processing job with parameters
-        # For now, just store the parameters in a way that can be retrieved later
-        # This will be implemented in Task 1.1.4
+        # Register and queue processing in background
+        processing_service = get_processing_service()
+        processing_service.register_job(
+            job_id=job_id,
+            filename=file.filename,
+            start_at_layer=start_at_layer,
+            extrusion_multiplier=extrusion_multiplier,
+        )
+        # Use background task to enforce timeout without blocking request
+        background_tasks.add_task(processing_service.process_with_timeout, job_id)
+        logger.info(
+            "Upload %s queued for processing (start_at_layer=%d, extrusion_multiplier=%.3f)",
+            job_id,
+            start_at_layer,
+            extrusion_multiplier,
+        )
 
         return UploadResponse(
             job_id=job_id,
