@@ -9,6 +9,23 @@ and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2
 
 ## [Unreleased]
 
+## [1.1.5] - 2025-11-11
+
+### Added
+- Processing engine integration (`ProcessingService`) with background threading and timeout.
+- Status endpoint (`/api/v1/status/{job_id}`) and download endpoint (`/api/v1/download/{job_id}`) with post-download cleanup.
+- Temporary file management with periodic background cleanup (`CleanupService`).
+- Integration tests for upload → status → download and cleanup behaviors.
+- Documentation updates (README, TODO, CHANGELOG) reflecting implemented features.
+
+### Changed
+- Upload endpoint now immediately queues processing jobs and returns pending status.
+- Post-download logic removes original upload while retaining processed output for re-download.
+
+### Known Issues
+- Oversized file currently returns `400` instead of documented `413` (future alignment planned).
+
+
 ### Added - 2025-11-11 (Processing Engine & Endpoints)
 
 #### Phase 1.1.4 - Processing Engine ✅
