@@ -90,13 +90,17 @@ Develop a web application that allows users to upload G-code files, apply the Br
 - [x] Maintain backward compatibility with existing script
 - [x] Create `bricklayers_core.py` module with public API
 
-##### 1.1.2 Choose and Set Up Web Framework
+##### 1.1.2 Choose and Set Up Web Framework ✅
 
-- [ ] Evaluate Flask vs. FastAPI
-- [ ] **Recommendation**: Choose FastAPI for built-in async and better long-term scalability
-- [ ] Initialize project structure with virtual environment
-- [ ] Set up basic FastAPI application skeleton
-- [ ] Configure CORS middleware
+- [x] Evaluate Flask vs. FastAPI
+- [x] **Decision**: Choose FastAPI for built-in async and better long-term scalability
+- [x] Initialize project structure with virtual environment
+- [x] Set up basic FastAPI application skeleton
+- [x] Configure CORS middleware with environment-based origins
+- [x] Create configuration system with environment variable support
+- [x] Organize project structure (routers, models, services, config)
+- [x] Create health check and root endpoints
+- [x] Document FastAPI structure in FASTAPI_STRUCTURE.md
 
 ##### 1.1.3 Implement File Upload Endpoint
 
