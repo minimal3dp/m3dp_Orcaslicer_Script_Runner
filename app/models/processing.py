@@ -44,3 +44,14 @@ class ErrorResponse(BaseModel):
     error: str = Field(description="Error type or code")
     message: str = Field(description="Detailed error message")
     detail: str | None = Field(default=None, description="Additional error details")
+
+
+class JobStatusResponse(BaseModel):
+    """Status response model for processing jobs."""
+
+    job_id: str = Field(description="Unique identifier for the processing job")
+    filename: str = Field(description="Original filename of uploaded file")
+    status: JobStatus = Field(description="Current status of the job")
+    created_at: datetime = Field(description="Timestamp when job was created")
+    updated_at: datetime = Field(description="Timestamp when job last updated")
+    error: str | None = Field(default=None, description="Error message if failed")

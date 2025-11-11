@@ -114,30 +114,33 @@ Develop a web application that allows users to upload G-code files, apply the Br
 - [x] Add comprehensive error handling with proper HTTP status codes
 - [x] Sanitize filenames to prevent security issues
 - [x] Accept processing parameters (start_at_layer, extrusion_multiplier)
+- [x] Queue processing job on successful upload
 
-##### 1.1.4 Implement Processing Engine
+##### 1.1.4 Implement Processing Engine ✅
 
-- [ ] Integrate BrickLayers processor with web backend
-- [ ] Handle processing in background (async/threading)
-- [ ] Implement timeout protection (kill long-running jobs)
-- [ ] Add comprehensive error handling and graceful failures
-- [ ] Log processing events for debugging
+- [x] Integrate BrickLayers processor with web backend
+- [x] Handle processing in background (thread pool via BackgroundTasks)
+- [x] Implement timeout protection (kill long-running jobs)
+- [x] Add comprehensive error handling and graceful failures
+- [x] Log processing events for debugging
+- [x] Provide job status tracking (pending, processing, completed, failed)
+- [x] Add `/status/{job_id}` endpoint to query job status
 
-##### 1.1.5 Implement Download Endpoint
+##### 1.1.5 Implement Download Endpoint (Partial)
 
-- [ ] Create `/download/{job_id}` endpoint
-- [ ] Serve processed G-code file with streaming
-- [ ] Add appropriate headers for download (Content-Disposition)
+- [x] Create `/download/{job_id}` endpoint
+- [x] Serve processed G-code file with streaming
+- [x] Add appropriate headers for download (Content-Disposition)
 - [ ] Implement cleanup after successful download
-- [ ] Handle file not found errors gracefully
+- [x] Handle file not found errors gracefully
 
-##### 1.1.6 Temporary File Management
+##### 1.1.6 Temporary File Management (Partial)
 
-- [ ] Create temporary directory structure for uploads/outputs
-- [ ] Store uploaded files temporarily with job ID naming
-- [ ] Store processed files temporarily
+- [x] Create temporary directory structure for uploads/outputs
+- [x] Store uploaded files temporarily with job ID naming
+- [x] Store processed files temporarily
 - [ ] Implement automatic cleanup (age-based or post-download)
-- [ ] Add security measures (prevent directory traversal, sanitize filenames)
+- [x] Add security measures (prevent directory traversal, sanitize filenames)
 - [ ] Set up background task for periodic cleanup
 
 #### 1.2 Frontend Development
@@ -177,19 +180,19 @@ Develop a web application that allows users to upload G-code files, apply the Br
 
 #### 1.3 Testing & Quality
 
-##### 1.3.1 Unit Tests
+##### 1.3.1 Unit Tests (Partial)
 
-- [ ] Set up pytest framework
+- [x] Set up pytest framework
 - [ ] Test BrickLayers processing logic (core functions)
 - [ ] Test file upload validation
 - [ ] Test file download response
 - [ ] Test parameter validation
 - [ ] Aim for >80% code coverage
 
-##### 1.3.2 Integration Tests
+##### 1.3.2 Integration Tests (Partial)
 
-- [ ] Set up test fixtures with sample G-code files
-- [ ] Test end-to-end file processing workflow
+- [x] Set up test fixtures with sample G-code files
+- [x] Test end-to-end file processing workflow
 - [ ] Test with sample G-code files from repository
 - [ ] Test error handling paths
 - [ ] Test concurrent job processing
@@ -581,5 +584,5 @@ Develop a web application that allows users to upload G-code files, apply the Br
 ---
 
 **Last Updated**: 2025-11-11
-**Status**: Planning Phase
+**Status**: MVP In Progress
 **Priority**: High (MVP Development)

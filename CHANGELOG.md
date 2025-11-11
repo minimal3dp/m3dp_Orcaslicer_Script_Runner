@@ -9,6 +9,36 @@ and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2
 
 ## [Unreleased]
 
+### Added - 2025-11-11 (Processing Engine & Endpoints)
+
+#### Phase 1.1.4 - Processing Engine ✅
+- Implemented `ProcessingService` with in-memory job tracking
+  - Registers jobs and manages lifecycle: pending → processing → completed/failed
+  - Executes processing in background thread pool with configurable concurrency
+  - Enforces timeout via settings (PROCESSING_TIMEOUT)
+  - Streams file IO to avoid large memory usage
+  - Logs job start, completion, and failures
+- Integrated BrickLayers core through service layer
+- Updated upload endpoint to register job and queue processing asynchronously
+
+#### Status & Download Endpoints ✅
+- Added `app/routers/jobs.py`
+  - GET `/api/v1/status/{job_id}` returns `JobStatusResponse`
+  - GET `/api/v1/download/{job_id}` streams processed G-code
+    - Returns 409 if job not completed, 404 if job/file not found
+    - Sets `Content-Disposition` with processed filename
+- Registered routers in `app/main.py` and `app/routers/__init__.py`
+
+#### Tests ✅
+- Added dev dependencies: `pytest`, `httpx`
+- Created integration tests: `tests/test_upload_process_download.py`
+  - Validates upload → status polling → download flow
+  - Checks early download conflict behavior
+- All tests passing locally via `uv run pytest`
+
+#### Notes
+- Oversized file validation currently returns 400 (Bad Request). Open item to align with documented 413 (Payload Too Large).
+
 ### Added - 2025-11-11 (Continued)
 
 #### Phase 1.1.3 - File Upload Endpoint ✅
