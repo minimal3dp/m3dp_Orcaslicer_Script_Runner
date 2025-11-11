@@ -142838,7 +142838,7 @@ G1 X112.425 Y119.153 E-.55885
 ;WIPE_END
 M106 S0
 ;TYPE:Custom
-; filament end gcode 
+; filament end gcode
 G1 Z50 F600 ; Move print head up
 G1 X5 Y188 F9000 ; present print
 G1 Z118 F600 ; Move print head further up
@@ -142876,8 +142876,8 @@ M73 P100 R0
 ; auxiliary_fan = 0
 ; bbl_calib_mark_logo = 1
 ; bbl_use_printhost = 0
-; bed_custom_model = 
-; bed_custom_texture = 
+; bed_custom_model =
+; bed_custom_texture =
 ; bed_exclude_area = 0x0
 ; bed_mesh_max = 99999,99999
 ; bed_mesh_min = -99999,-99999
@@ -142902,8 +142902,8 @@ M73 P100 R0
 ; brim_width = 5
 ; calib_flowrate_topinfill_special_order = 0
 ; chamber_temperature = 0
-; change_extrusion_role_gcode = 
-; change_filament_gcode = 
+; change_extrusion_role_gcode =
+; change_filament_gcode =
 ; close_fan_the_first_x_layers = 1
 ; complete_print_exhaust_fan_speed = 80
 ; cool_plate_temp = 60
@@ -142913,7 +142913,7 @@ M73 P100 R0
 ; counterbore_hole_bridging = none
 ; curr_bed_type = High Temp Plate
 ; default_acceleration = 500
-; default_bed_type = 
+; default_bed_type =
 ; default_filament_colour = ""
 ; default_filament_profile = "Creality Generic PLA"
 ; default_jerk = 0
@@ -142948,7 +142948,7 @@ M73 P100 R0
 ; exclude_object = 0
 ; extra_loading_move = -2
 ; extra_perimeters_on_overhangs = 0
-; extra_solid_infills = 
+; extra_solid_infills =
 ; extruder_clearance_height_to_lid = 34
 ; extruder_clearance_height_to_rod = 34
 ; extruder_clearance_radius = 47
@@ -143020,7 +143020,7 @@ M73 P100 R0
 ; gcode_flavor = marlin2
 ; gcode_label_objects = 1
 ; has_scarf_joint_seam = 0
-; head_wrap_detect_zone = 
+; head_wrap_detect_zone =
 ; high_current_on_filament_swap = 0
 ; hole_to_polyhole = 0
 ; hole_to_polyhole_threshold = 0.01
@@ -143080,7 +143080,7 @@ M73 P100 R0
 ; is_infill_first = 0
 ; lateral_lattice_angle_1 = -45
 ; lateral_lattice_angle_2 = 45
-; layer_change_gcode = 
+; layer_change_gcode =
 ; layer_height = 0.2
 ; line_width = 0.4
 ; long_retractions_when_cut = 0
@@ -143128,7 +143128,7 @@ M73 P100 R0
 ; minimum_sparse_infill_area = 15
 ; mmu_segmented_region_interlocking_depth = 0
 ; mmu_segmented_region_max_width = 0
-; notes = 
+; notes =
 ; nozzle_diameter = 0.4
 ; nozzle_height = 2.5
 ; nozzle_hrc = 0
@@ -143159,7 +143159,7 @@ M73 P100 R0
 ; parking_pos_retraction = 92
 ; pellet_flow_coefficient = 0.4157
 ; pellet_modded_printer = 0
-; post_process = 
+; post_process =
 ; precise_outer_wall = 1
 ; precise_z_height = 0
 ; preferred_orientation = 0
@@ -143177,14 +143177,14 @@ M73 P100 R0
 ; printable_area = 5x0,230x0,230x235,5x235
 ; printable_height = 250
 ; printer_model = Creality CR-6 SE
-; printer_notes = 
+; printer_notes =
 ; printer_settings_id = M3DP CR-6 SE 0.4
 ; printer_structure = i3
 ; printer_technology = FFF
 ; printer_variant = 0.4
 ; printhost_authorization_type = key
 ; printhost_ssl_ignore_revoke = 0
-; printing_by_object_gcode = 
+; printing_by_object_gcode =
 ; purge_in_prime_tower = 1
 ; raft_contact_distance = 0.1
 ; raft_expansion = 1.5
@@ -143252,13 +143252,13 @@ M73 P100 R0
 ; small_perimeter_threshold = 0
 ; solid_infill_direction = 45
 ; solid_infill_filament = 1
-; solid_infill_rotate_template = 
+; solid_infill_rotate_template =
 ; sparse_infill_acceleration = 100%
 ; sparse_infill_density = 15%
 ; sparse_infill_filament = 1
 ; sparse_infill_line_width = 0.45
 ; sparse_infill_pattern = crosshatch
-; sparse_infill_rotate_template = 
+; sparse_infill_rotate_template =
 ; sparse_infill_speed = 50
 ; spiral_finishing_flow_ratio = 0
 ; spiral_mode = 0
@@ -143307,7 +143307,7 @@ M73 P100 R0
 ; support_type = normal(auto)
 ; symmetric_infill_y_axis = 0
 ; temperature_vitrification = 60
-; template_custom_gcode = 
+; template_custom_gcode =
 ; textured_cool_plate_temp = 40
 ; textured_cool_plate_temp_initial_layer = 40
 ; textured_plate_temp = 60
@@ -143317,7 +143317,7 @@ M73 P100 R0
 ; thumbnails = 48x48/PNG,300x300/PNG
 ; thumbnails_format = PNG
 ; time_cost = 0
-; time_lapse_gcode = 
+; time_lapse_gcode =
 ; timelapse_type = 0
 ; top_bottom_infill_wall_overlap = 25%
 ; top_shell_layers = 4
@@ -143348,7 +143348,7 @@ M73 P100 R0
 ; tree_support_tip_diameter = 0.8
 ; tree_support_top_rate = 30%
 ; tree_support_wall_count = 0
-; upward_compatible_machine = 
+; upward_compatible_machine =
 ; use_firmware_retraction = 0
 ; use_relative_e_distances = 1
 ; wall_direction = auto
@@ -143392,5 +143392,3 @@ M73 P100 R0
 ; first_layer_temperature = 220
 ; first_layer_height = 0.200
 ; CONFIG_BLOCK_END
-
-
