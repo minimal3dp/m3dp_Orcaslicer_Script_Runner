@@ -83,12 +83,12 @@ Develop a web application that allows users to upload G-code files, apply the Br
 
 #### 1.1 Backend Development
 
-##### 1.1.1 Extract BrickLayers Core Logic
+##### 1.1.1 Extract BrickLayers Core Logic ✅
 
-- [ ] Separate CLI interface from processing engine
-- [ ] Create clean API for web integration
-- [ ] Maintain backward compatibility with existing script
-- [ ] Create `bricklayers_core.py` module with public API
+- [x] Separate CLI interface from processing engine
+- [x] Create clean API for web integration
+- [x] Maintain backward compatibility with existing script
+- [x] Create `bricklayers_core.py` module with public API
 
 ##### 1.1.2 Choose and Set Up Web Framework
 
