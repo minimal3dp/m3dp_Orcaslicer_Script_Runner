@@ -9,6 +9,28 @@ and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2
 
 ## [Unreleased]
 
+### Added - 2025-11-12
+
+#### Phase 1.1.1 - Core Module Extraction ✅
+- Extracted BrickLayers processing engine (2050 lines) from original script
+- Created `app/core/bricklayers_core.py` with 8 core classes
+- Created `app/core/api.py` with public API documentation
+- Created `app/core/__init__.py` for clean package imports
+- Verified extraction with `test_core.py` - all tests passing
+- Separated CLI code from processing logic for web integration
+- Maintained backward compatibility with original script
+- Documented extraction in CORE_EXTRACTION_COMPLETE.md
+
+#### Key Classes Extracted
+- `BrickLayersProcessor` - Main processing engine
+- `GCodeFeature` - Feature detection
+- `GCodeSimulator` - State simulation
+- `GCodeLine` - Line wrapper with state
+- `Point` - 2D geometry
+- `LoopNode` - Loop detection
+- `ObjectEntry` - Multi-object tracking
+- Helper NamedTuples for state management
+
 ### Added - 2025-11-11
 
 #### Project Setup

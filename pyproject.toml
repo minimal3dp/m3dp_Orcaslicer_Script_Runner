@@ -65,6 +65,21 @@ unfixable = []
 "__init__.py" = ["F401"]
 # Allow print statements in scripts
 "scripts/**/*.py" = ["T201"]
+# BrickLayers core: Preserve original code style and mathematical notation
+"app/core/bricklayers_core.py" = [
+    "E402",   # Module import not at top - intentional logical grouping
+    "E712",   # Comparison to True - emphasizes critical state checks
+    "E741",   # Ambiguous variable name - mathematical notation (I, J for arcs)
+    "N803",   # Argument should be lowercase - mathematical notation (Cx, Cy, etc.)
+    "N806",   # Variable should be lowercase - mathematical notation (P, C, T, I, J)
+    "F841",   # Unused variable - debugging artifacts and future placeholders
+    "B905",   # zip() without strict= - works correctly by construction
+    "RUF003", # Ambiguous unicode character - from original source
+    "SIM102", # Nested if statements - improves readability over combining
+    "SIM108", # Ternary operator - explicit if-else is more debuggable
+]
+# Original BrickLayers script: Preserve as-is (not part of web app)
+"scripts/BrickLayers/bricklayers.py" = ["ALL"]
 
 [tool.ruff.format]
 # Use double quotes by default
