@@ -1,0 +1,3 @@
+[submodule "scripts/BrickLayers"]
+	path = scripts/BrickLayers
+	url = git@github.com:GeekDetour/BrickLayers.git
