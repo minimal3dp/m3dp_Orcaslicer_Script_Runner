@@ -104,12 +104,16 @@ Develop a web application that allows users to upload G-code files, apply the Br
 
 ##### 1.1.3 Implement File Upload Endpoint
 
-- [ ] Create `/upload` endpoint accepting multipart/form-data
-- [ ] Accept G-code file uploads (.gcode extension)
-- [ ] Validate file size (set reasonable limits: 10-50MB initially)
-- [ ] Validate file format (basic G-code validation)
-- [ ] Generate unique job IDs for tracking (UUID)
-- [ ] Return job ID to client
+- [x] Create `/upload` endpoint accepting multipart/form-data
+- [x] Accept G-code file uploads (.gcode, .gco, .g extensions)
+- [x] Validate file size (configured limit: 50MB default)
+- [x] Validate file format (basic G-code validation with pattern matching)
+- [x] Generate unique job IDs for tracking (UUID)
+- [x] Return job ID and upload details to client
+- [x] Implement FileService for file operations and validation
+- [x] Add comprehensive error handling with proper HTTP status codes
+- [x] Sanitize filenames to prevent security issues
+- [x] Accept processing parameters (start_at_layer, extrusion_multiplier)
 
 ##### 1.1.4 Implement Processing Engine
 

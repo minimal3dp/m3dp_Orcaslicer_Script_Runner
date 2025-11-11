@@ -9,6 +9,59 @@ and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2
 
 ## [Unreleased]
 
+### Added - 2025-11-11 (Continued)
+
+#### Phase 1.1.3 - File Upload Endpoint ✅
+- Created `app/routers/upload.py` with POST `/api/v1/upload` endpoint
+- Created `app/models/upload.py` with upload-specific models:
+  - `UploadResponse` model with job details
+  - `ValidationError` model for validation errors
+- Created `app/services/file_service.py` with comprehensive file handling:
+  - `FileService` class for all file operations
+  - `FileValidationError` custom exception
+  - File size validation (configurable max: 50MB default)
+  - File extension validation (.gcode, .gco, .g)
+  - Filename sanitization to prevent security issues
+  - G-code content validation with pattern matching
+  - Path traversal protection
+  - Safe file storage with UUID-prefixed filenames
+- Updated `app/routers/__init__.py` to export upload_router
+- Updated `app/models/__init__.py` to export upload models
+- Updated `app/services/__init__.py` to export FileService
+- Updated `app/main.py` to register upload router
+- Updated TODO.md marking Task 1.1.3 as complete
+
+#### File Upload Features
+- Accepts multipart/form-data uploads with G-code files
+- Accepts processing parameters (start_at_layer, extrusion_multiplier)
+- Generates unique job IDs using UUID4
+- Validates file size against configured maximum
+- Validates file extensions (.gcode, .gco, .g)
+- Performs basic G-code content validation
+- Sanitizes filenames to prevent directory traversal
+- Returns comprehensive upload response with job details
+- Implements proper error handling with HTTP status codes:
+  - 201 Created for successful uploads
+  - 400 Bad Request for validation errors
+  - 500 Internal Server Error for system errors
+- Cleans up partial uploads on errors
+
+#### File Service Security Features
+- Filename validation (no path traversal, null bytes)
+- Character whitelist for filenames
+- G-code content pattern matching validation
+- Sanitized filenames stored with UUID prefix
+- Separate upload and output directories
+- Safe file deletion with error handling
+
+#### Testing & Verification
+- Tested successful upload with 3.3MB G-code file
+- Verified job ID generation and file storage
+- Tested validation errors (invalid extension, empty file)
+- Confirmed proper HTTP status codes and error messages
+- Verified API documentation includes upload endpoint
+- All validations working correctly
+
 ### Added - 2025-11-12
 
 #### Phase 1.1.2 - FastAPI Structure Setup ✅
