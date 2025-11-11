@@ -47,7 +47,12 @@ async def get_job_status(job_id: str) -> JobStatusResponse:
     },
 )
 async def download_processed_file(job_id: str):
-    """Stream processed G-code file if job completed."""
+    """Stream processed G-code file if job completed and perform post-download cleanup.
+
+    Cleanup strategy (current): Delete original upload file immediately after successful
+    response is prepared; retain processed output for potential re-download until a future
+    retention mechanism is implemented.
+    """
     svc = get_processing_service()
     job = svc.get_job(job_id)
     if job is None:
@@ -67,9 +72,21 @@ async def download_processed_file(job_id: str):
             status_code=404,
             detail={"error": "file_missing", "message": "Processed file not found"},
         )
-    logger.info("Download served for job %s -> %s", job.job_id, job.output_path)
-    return FileResponse(
+
+    # Prepare response first (do not delete processed output yet to allow potential re-downloads)
+    response = FileResponse(
         path=str(job.output_path),
         media_type="text/plain",
         filename=f"{Path(job.filename).stem}_processed.gcode",
     )
+
+    # Post-download cleanup: remove original uploaded file to save space
+    if job.upload_path and Path(job.upload_path).exists():
+        try:
+            Path(job.upload_path).unlink()
+            logger.info("Upload file cleaned after download for job %s", job.job_id)
+        except OSError as e:
+            logger.warning("Failed to delete upload file for job %s: %s", job.job_id, e)
+
+    logger.info("Download served for job %s -> %s", job.job_id, job.output_path)
+    return response

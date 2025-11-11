@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.routers import health_router, jobs_router, upload_router
+from app.services.cleanup_service import get_cleanup_service
 
 # Initialize settings
 settings = get_settings()
@@ -37,6 +38,15 @@ app.include_router(health_router)
 app.include_router(upload_router)
 app.include_router(jobs_router)
 
-# TODO: Add routes for:
-# - Processing status (/status/{job_id})
-# - File download (/download/{job_id})
+
+@app.on_event("startup")
+def _startup_cleanup():  # pragma: no cover - FastAPI lifecycle
+    get_cleanup_service().start_background()
+
+
+@app.on_event("shutdown")
+def _shutdown_cleanup():  # pragma: no cover - FastAPI lifecycle
+    get_cleanup_service().stop_background()
+
+
+# Background cleanup thread started on startup; see CleanupService for implementation.
