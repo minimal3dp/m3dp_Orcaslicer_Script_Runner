@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import health_router
+from app.routers import health_router, upload_router
 
 # Initialize settings
 settings = get_settings()
@@ -34,8 +34,8 @@ app.add_middleware(
 
 # Include routers
 app.include_router(health_router)
+app.include_router(upload_router)
 
 # TODO: Add routes for:
-# - File upload (/upload)
 # - Processing status (/status/{job_id})
 # - File download (/download/{job_id})
