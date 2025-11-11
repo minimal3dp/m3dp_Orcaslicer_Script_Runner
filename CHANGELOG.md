@@ -8,6 +8,8 @@ and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2
 ---
 
 ## [Unreleased]
+### Fixed
+- Align oversized file upload to return `413 Payload Too Large` instead of previous `400` response.
 
 ## [1.1.5] - 2025-11-11
 
@@ -23,7 +25,7 @@ and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2
 - Post-download logic removes original upload while retaining processed output for re-download.
 
 ### Known Issues
-- Oversized file currently returns `400` instead of documented `413` (future alignment planned).
+<!-- None currently noted after oversized file code alignment -->
 
 
 ### Added - 2025-11-11 (Processing Engine & Endpoints)

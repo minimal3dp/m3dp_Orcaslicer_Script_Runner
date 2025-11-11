@@ -8,7 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Uploa
 
 from app.models.processing import ErrorResponse
 from app.models.upload import UploadResponse, ValidationError
-from app.services.file_service import FileService, FileValidationError
+from app.services.file_service import FileService, FileTooLargeError, FileValidationError
 from app.services.processing_service import get_processing_service
 
 logger = logging.getLogger(__name__)
@@ -112,6 +112,11 @@ async def upload_file(
             message="File uploaded successfully and queued for processing",
         )
 
+    except FileTooLargeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail={"error": "file_too_large", "message": str(e)},
+        ) from e
     except FileValidationError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

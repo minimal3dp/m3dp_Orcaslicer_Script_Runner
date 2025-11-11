@@ -145,6 +145,49 @@ Develop a web application that allows users to upload G-code files, apply the Br
 - [x] Add security measures (prevent directory traversal, sanitize filenames)
 - [x] Set up background task for periodic cleanup
 
+##### 1.1.7 Backend Code Quality & Technical Debt
+
+- [ ] Migrate from deprecated `on_event` to FastAPI lifespan API for startup/shutdown
+    - Removes 4 deprecation warnings
+    - Modern approach using async context managers
+    - Better cleanup guarantees
+- [ ] Fix `test_core.py` to use assertions instead of return statements
+    - Removes pytest warning about test functions returning non-None
+    - Proper test assertion pattern
+- [ ] Enhance OpenAPI documentation
+    - Add 413 response example to upload endpoint schema
+    - Include error response examples for all error codes
+    - Add request/response examples for happy paths
+- [ ] Improve error handling consistency
+    - Standardize error response format across all endpoints
+    - Add error codes enum for client-side error handling
+    - Consider problem details (RFC 7807) format
+- [ ] Add request validation tests
+    - Test invalid parameter ranges (negative start_at_layer, out-of-range multiplier)
+    - Test malformed requests (missing required fields)
+    - Test edge cases (empty filenames, special characters)
+- [ ] Optimize file handling
+    - Consider streaming upload validation to avoid reading entire file into memory
+    - Add chunked upload support for very large files
+    - Implement resumable uploads for unreliable connections
+- [ ] Add structured logging
+    - Use structured logging format (JSON) for better parsing
+    - Add request IDs for tracing requests across services
+    - Log key metrics (processing time, file sizes, error rates)
+- [ ] Enhance monitoring and observability
+    - Add application metrics (Prometheus-compatible)
+    - Track job queue depth and processing times
+    - Monitor cleanup service effectiveness
+- [ ] Consider background job improvements
+    - Evaluate moving to proper task queue (Celery, RQ, or Dramatiq)
+    - Add job priority support
+    - Implement job cancellation endpoint
+- [ ] Security enhancements
+    - Add request rate limiting per IP
+    - Implement file content scanning for malicious patterns
+    - Add request size limits at middleware level
+    - Consider adding API key authentication for public deployment
+
 #### 1.2 Frontend Development
 
 ##### 1.2.1 Create Upload Interface

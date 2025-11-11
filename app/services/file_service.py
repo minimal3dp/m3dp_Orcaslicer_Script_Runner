@@ -13,6 +13,12 @@ class FileValidationError(Exception):
     pass
 
 
+class FileTooLargeError(FileValidationError):
+    """Raised when an uploaded file exceeds the configured size limit."""
+
+    pass
+
+
 class FileService:
     """Service for file operations and validation."""
 
@@ -32,7 +38,7 @@ class FileService:
         if file_size > self.settings.MAX_UPLOAD_SIZE:
             max_mb = self.settings.MAX_UPLOAD_SIZE / (1024 * 1024)
             actual_mb = file_size / (1024 * 1024)
-            raise FileValidationError(
+            raise FileTooLargeError(
                 f"File size ({actual_mb:.2f}MB) exceeds maximum allowed size ({max_mb:.2f}MB)"
             )
 

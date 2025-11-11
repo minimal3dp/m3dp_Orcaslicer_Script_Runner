@@ -25,6 +25,7 @@ Process G-code files with the BrickLayers post-processing script via a simple Fa
 - POST `/api/v1/upload`
 	- Form fields: `file` (G-code), `start_at_layer` (int, default 3), `extrusion_multiplier` (float, 1.0–1.2, default 1.05)
 	- Response: `201 Created` with `{ job_id, status, ... }`
+	- Errors: `400` for validation errors; `413` if file exceeds `MAX_UPLOAD_SIZE`
 
 - GET `/api/v1/status/{job_id}`
 	- Response: `200 OK` with `{ job_id, filename, status, created_at, updated_at, error }`
@@ -73,7 +74,6 @@ Configure via environment variables (defaults in `app/config/settings.py`):
 
 ## Notes and known gaps
 
-- Oversized files currently return `400 Bad Request`; docs reference `413 Payload Too Large`. This will be aligned in a follow-up.
 - Cleanup behavior:
 	- After a successful download, the original uploaded file is removed.
 	- A background cleanup task periodically deletes files older than `FILE_RETENTION_HOURS` from upload and output directories.
