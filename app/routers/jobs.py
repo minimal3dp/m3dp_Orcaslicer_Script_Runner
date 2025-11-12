@@ -8,6 +8,7 @@ from pathlib import Path
 from fastapi import APIRouter
 from fastapi.responses import FileResponse, JSONResponse
 
+from app.metrics import metrics
 from app.models import ProblemDetails
 from app.models.processing import JobStatus, JobStatusResponse
 from app.services.processing_service import get_processing_service
@@ -214,6 +215,7 @@ async def download_processed_file(job_id: str):
     svc = get_processing_service()
     job = svc.get_job(job_id)
     if job is None:
+        metrics.track_download_failure("not_found")
         logger.warning(
             "Download failed: job not found",
             extra={"context": {"job_id": job_id}},
@@ -226,6 +228,7 @@ async def download_processed_file(job_id: str):
         }
         return JSONResponse(status_code=404, content=body)
     if job.status != JobStatus.COMPLETED:
+        metrics.track_download_failure("not_ready")
         logger.warning(
             f"Download failed: job not ready ({job.status})",
             extra={
@@ -244,6 +247,7 @@ async def download_processed_file(job_id: str):
         }
         return JSONResponse(status_code=409, content=body)
     if not job.output_path or not Path(job.output_path).exists():
+        metrics.track_download_failure("file_missing")
         logger.error(
             "Download failed: processed file missing",
             extra={
@@ -263,6 +267,9 @@ async def download_processed_file(job_id: str):
         return JSONResponse(status_code=404, content=body)
 
     output_size = Path(job.output_path).stat().st_size
+
+    # Track successful download
+    metrics.track_download_success()
 
     # Prepare response first (do not delete processed output yet to allow potential re-downloads)
     response = FileResponse(

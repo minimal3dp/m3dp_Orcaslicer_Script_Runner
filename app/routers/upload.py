@@ -7,6 +7,7 @@ from datetime import datetime
 from fastapi import APIRouter, BackgroundTasks, File, Form, UploadFile, status
 from fastapi.responses import JSONResponse
 
+from app.metrics import metrics
 from app.models import ProblemDetails
 from app.models.upload import UploadResponse
 from app.services.file_service import FileService, FileTooLargeError, FileValidationError
@@ -183,6 +184,9 @@ async def upload_file(
         # Use background task to enforce timeout without blocking request
         background_tasks.add_task(processing_service.process_with_timeout, job_id)
 
+        # Track metrics
+        metrics.track_upload_success(saved_size)
+
         # Log upload with structured metadata
         logger.info(
             f"File uploaded and queued: {file.filename}",
@@ -208,6 +212,7 @@ async def upload_file(
         )
 
     except FileTooLargeError as e:
+        metrics.track_upload_failure("size")
         logger.warning(
             f"File too large: {file.filename}",
             extra={
@@ -226,6 +231,7 @@ async def upload_file(
         }
         return JSONResponse(status_code=status.HTTP_413_CONTENT_TOO_LARGE, content=body)
     except FileValidationError as e:
+        metrics.track_upload_failure("validation")
         logger.warning(
             f"File validation failed: {file.filename}",
             extra={
@@ -245,6 +251,8 @@ async def upload_file(
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=body)
 
     except Exception as e:
+        metrics.track_upload_failure("error")
+
         # Clean up any partial upload
         try:
             upload_path = file_service.get_upload_path(job_id, file.filename or "")

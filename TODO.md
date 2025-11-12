@@ -186,10 +186,17 @@ Develop a web application that allows users to upload G-code files, apply the Br
     - Added PerformanceLogger for automatic operation timing
     - Updated all routers and services with contextual logging
     - Environment variables: JSON_LOGS (true/false), LOG_LEVEL (INFO/DEBUG/etc.)
-- [ ] Enhance monitoring and observability
+- [x] Enhance monitoring and observability ✅
     - Add application metrics (Prometheus-compatible)
     - Track job queue depth and processing times
     - Monitor cleanup service effectiveness
+    - Implemented comprehensive Prometheus metrics (/metrics endpoint)
+    - Track HTTP requests (count, duration, status by endpoint)
+    - Track uploads (success/failure, file sizes, validation failures)
+    - Track processing (active/pending jobs, duration, input/output sizes, success/failure)
+    - Track downloads (success/failure rates)
+    - Track cleanup (files deleted, bytes freed, errors)
+    - Automatic metric collection via middleware and service integrations
 - [ ] Consider background job improvements
     - Evaluate moving to proper task queue (Celery, RQ, or Dramatiq)
     - Add job priority support

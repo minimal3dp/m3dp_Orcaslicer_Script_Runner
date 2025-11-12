@@ -10,6 +10,15 @@ and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2
 ## [Unreleased]
 
 ### Added
+- **Prometheus Metrics & Observability**
+  - `/metrics` endpoint exposing Prometheus-compatible metrics
+  - HTTP request metrics (count, duration, status codes by endpoint)
+  - Upload metrics (success/failure rates, file sizes, validation failures)
+  - Processing metrics (active/pending job counts, duration, throughput, success/failure rates)
+  - Download metrics (success/failure by reason)
+  - Cleanup metrics (files deleted, bytes freed, error counts)
+  - Automatic metric collection via middleware and service integrations
+  - Production-ready for Prometheus scraping and Grafana dashboards
 - **Structured Logging Infrastructure**
   - JSON-formatted logs for production (machine-parseable)
   - Human-readable format for development (request ID prefix)

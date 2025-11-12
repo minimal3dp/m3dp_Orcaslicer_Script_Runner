@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.logging_config import configure_logging
 from app.middleware import RequestLoggingMiddleware
-from app.routers import health_router, jobs_router, upload_router
+from app.routers import health_router, jobs_router, metrics_router, upload_router
 from app.services.cleanup_service import get_cleanup_service
 
 # Initialize settings
@@ -67,3 +67,4 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(upload_router)
 app.include_router(jobs_router)
+app.include_router(metrics_router)

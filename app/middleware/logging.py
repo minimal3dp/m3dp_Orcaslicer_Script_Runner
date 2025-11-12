@@ -14,6 +14,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from app.logging_config import log_request_metrics, set_request_id
+from app.metrics import http_request_duration_seconds, http_requests_total
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -60,6 +61,18 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
             # Calculate duration
             duration_ms = (time.time() - start_time) * 1000
+            duration_seconds = duration_ms / 1000
+
+            # Track metrics
+            http_requests_total.labels(
+                method=request.method,
+                endpoint=request.url.path,
+                status=response.status_code,
+            ).inc()
+            http_request_duration_seconds.labels(
+                method=request.method,
+                endpoint=request.url.path,
+            ).observe(duration_seconds)
 
             # Log request metrics
             client_ip = request.client.host if request.client else None

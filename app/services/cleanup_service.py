@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from app.config import get_settings
+from app.metrics import metrics
 
 logger = logging.getLogger(__name__)
 
@@ -41,10 +42,14 @@ class CleanupService:
         """
         now = datetime.now()
         deleted_counts: dict[str, int] = {}
+        total_files_deleted = 0
+        total_bytes_freed = 0
+
         for directory in self._iter_target_dirs():
             if not directory.exists():
                 continue
             deleted = 0
+            bytes_freed = 0
             for path in directory.iterdir():
                 if not path.is_file():
                     continue
@@ -52,13 +57,28 @@ class CleanupService:
                     stat = path.stat()
                     age = now - datetime.fromtimestamp(stat.st_mtime)
                     if age > self._retention:
+                        file_size = stat.st_size
                         path.unlink(missing_ok=True)
                         deleted += 1
+                        bytes_freed += file_size
+                        total_files_deleted += 1
+                        total_bytes_freed += file_size
                 except OSError as e:  # pragma: no cover - rare
                     logger.warning("Failed to examine/delete %s: %s", path, e)
+                    metrics.track_cleanup_error()
             if deleted:
-                logger.info("Cleanup removed %d files from %s", deleted, directory)
+                logger.info(
+                    "Cleanup removed %d files from %s (freed %d bytes)",
+                    deleted,
+                    directory,
+                    bytes_freed,
+                )
             deleted_counts[str(directory)] = deleted
+
+        # Track cleanup metrics
+        if total_files_deleted > 0:
+            metrics.track_cleanup_run(total_files_deleted, total_bytes_freed)
+
         return deleted_counts
 
     def _loop(self) -> None:  # pragma: no cover (timing loop not unit tested)

@@ -17,6 +17,7 @@ from pathlib import Path
 from app.config import get_settings
 from app.core import BrickLayersProcessor
 from app.logging_config import PerformanceLogger
+from app.metrics import metrics
 from app.services.file_service import FileService
 
 logger = logging.getLogger(__name__)
@@ -104,6 +105,7 @@ class ProcessingService:
         job.updated_at = datetime.now()
 
         input_size = job.upload_path.stat().st_size
+        start_time = metrics.track_processing_started(job)
 
         logger.info(
             f"Processing started: {job.filename}",
@@ -145,6 +147,9 @@ class ProcessingService:
             job.updated_at = datetime.now()
             output_size = job.output_path.stat().st_size
 
+            # Track successful processing
+            metrics.track_processing_completed(start_time, input_size, output_size)
+
             logger.info(
                 f"Processing completed: {job.filename}",
                 extra={
@@ -164,6 +169,10 @@ class ProcessingService:
             job.status = "failed"
             job.updated_at = datetime.now()
             job.error = str(e)
+
+            # Track failed processing
+            metrics.track_processing_failed(start_time, "error")
+
             logger.error(
                 f"Processing failed: {job.filename}",
                 extra={
@@ -195,6 +204,9 @@ class ProcessingService:
                 job.status = "failed"
                 job.updated_at = datetime.now()
                 job.error = f"Processing timed out after {self.settings.PROCESSING_TIMEOUT} seconds"
+
+                # Track timeout (note: start_time not available here, will be tracked in _run_processing if needed)
+                # For now, just log the timeout
                 logger.error(
                     f"Processing timed out: {job.filename}",
                     extra={
