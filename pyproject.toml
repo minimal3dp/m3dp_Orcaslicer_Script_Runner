@@ -9,6 +9,7 @@ dependencies = [
     "pydantic>=2.12.4",
     "prometheus-client>=0.21.0",
     "python-multipart>=0.0.20",
+    "slowapi>=0.1.9",
     "uvicorn>=0.38.0",
 ]
 

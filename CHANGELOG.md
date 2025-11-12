@@ -10,6 +10,17 @@ and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2
 ## [Unreleased]
 
 ### Added
+- **Security Enhancements**
+  - Rate limiting middleware using slowapi (configurable per endpoint and globally)
+  - File content scanner detecting malicious patterns (shell commands, path traversal, script injection)
+  - Security headers middleware (X-Frame-Options, CSP, HSTS, X-Content-Type-Options, etc.)
+  - Optional API key authentication with SHA-256 hashed keys
+  - Request size limits (header + body validation) at middleware level
+  - Pattern-based malicious content detection with configurable strict mode
+  - Whitelist system to minimize false positives in legitimate G-code
+  - Environment-based configuration for all security features
+  - Metrics and structured logging for security events (rate limits, suspicious files, auth failures)
+  - Comprehensive documentation in `docs/SECURITY_ENHANCEMENTS.md`
 - **Background Job Enhancements**
   - Job priority support (0=high, 1=normal, 2=low) on upload endpoint
   - Job cancellation endpoint (`POST /cancel/{job_id}`)

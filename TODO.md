@@ -197,7 +197,7 @@ Develop a web application that allows users to upload G-code files, apply the Br
     - Track downloads (success/failure rates)
     - Track cleanup (files deleted, bytes freed, errors)
     - Automatic metric collection via middleware and service integrations
-- [x] Consider background job improvements ✅ **COMPLETED 2025-01-XX**
+- [x] Consider background job improvements ✅ **COMPLETED 2025-11-11**
     - [x] Evaluated task queue options (Celery, RQ, Dramatiq vs. current ThreadPoolExecutor)
     - [x] Decision: Enhance current system (0 dependencies, proven scale up to 500 jobs/day)
     - [x] Added job priority support (0=high, 1=normal, 2=low) - dataclass, registration, upload endpoint
@@ -205,11 +205,16 @@ Develop a web application that allows users to upload G-code files, apply the Br
     - [x] Cooperative cancellation with graceful handling (checks every 1000 lines, cleans up partial files)
     - [x] Comprehensive evaluation documented in docs/BACKGROUND_JOBS_EVALUATION.md
     - [x] Migration path identified if traffic grows beyond current capacity
-- [ ] Security enhancements
-    - Add request rate limiting per IP
-    - Implement file content scanning for malicious patterns
-    - Add request size limits at middleware level
-    - Consider adding API key authentication for public deployment
+- [x] Security enhancements ✅ **COMPLETED 2025-11-11**
+    - [x] Implemented request rate limiting per IP using slowapi (configurable per endpoint)
+    - [x] Added file content scanning for malicious patterns (shell commands, path traversal, script injection)
+    - [x] Implemented security headers middleware (X-Frame-Options, CSP, HSTS, etc.)
+    - [x] Added optional API key authentication for public deployment
+    - [x] Request size limits at middleware level (header + body validation)
+    - [x] Pattern-based detection with whitelist to minimize false positives
+    - [x] Comprehensive security documentation in docs/SECURITY_ENHANCEMENTS.md
+    - [x] Environment-based configuration for all security features
+    - [x] Metrics and structured logging for security events
 
 #### 1.2 Frontend Development
 

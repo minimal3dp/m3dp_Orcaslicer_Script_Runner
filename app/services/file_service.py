@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import BinaryIO
 
 from app.config import get_settings
+from app.security import scanner
 
 
 class FileValidationError(Exception):
@@ -122,6 +123,19 @@ class FileService:
             raise FileValidationError(
                 "File doesn't appear to contain valid G-code. Expected G-code commands and coordinates."
             )
+
+    def scan_file_content(self, file_path: Path) -> None:
+        """Scan file for malicious content patterns.
+
+        Args:
+            file_path: Path to the file to scan
+
+        Raises:
+            FileValidationError: If suspicious content is detected
+        """
+        is_safe, reason = scanner.scan_file(file_path)
+        if not is_safe:
+            raise FileValidationError(reason or "File contains suspicious content")
 
     def sanitize_filename(self, filename: str) -> str:
         """Sanitize filename by removing/replacing unsafe characters.

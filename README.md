@@ -78,18 +78,38 @@ open http://127.0.0.1:8000/docs
 
 Configure via environment variables (defaults in `app/config/settings.py`):
 
+### Core Settings
 - `MAX_UPLOAD_SIZE` (bytes) – default 50MB
 - `PROCESSING_TIMEOUT` (seconds) – default 15 minutes
 - `MAX_CONCURRENT_JOBS` – default 5
 - `UPLOAD_DIR`, `OUTPUT_DIR` – default `temp/uploads`, `temp/outputs`
 - `FILE_RETENTION_HOURS` – age after which temp files are deleted by the cleanup task (default 24h)
 - `CLEANUP_INTERVAL_MINUTES` – how often the cleanup task runs (default 60m)
+
+### Logging & Monitoring
 - `JSON_LOGS` (true/false) – enable JSON-formatted structured logging (default false)
 - `LOG_LEVEL` (DEBUG/INFO/WARNING/ERROR) – logging verbosity (default INFO)
-- CORS settings via `CORS_ORIGINS`, `CORS_ALLOW_*`
+
+### Security Settings
+- `RATE_LIMIT_ENABLED` (true/false) – enable rate limiting (default true)
+- `RATE_LIMIT_UPLOAD` – upload endpoint rate limit (default 10/minute)
+- `RATE_LIMIT_STATUS` – status endpoint rate limit (default 30/minute)
+- `RATE_LIMIT_DOWNLOAD` – download endpoint rate limit (default 20/minute)
+- `RATE_LIMIT_CANCEL` – cancel endpoint rate limit (default 15/minute)
+- `RATE_LIMIT_GLOBAL` – global rate limit (default 100/minute)
+- `FILE_SCANNING_ENABLED` (true/false) – scan uploads for malicious content (default true)
+- `FILE_SCANNING_STRICT_MODE` (true/false) – reject on any suspicious pattern (default false)
+- `SECURITY_HEADERS_ENABLED` (true/false) – add security headers to responses (default true)
+- `API_AUTH_ENABLED` (true/false) – enable API key authentication (default false)
+- `API_KEYS` – comma-separated API key:hash pairs for authentication
+
+### CORS Settings
+- `CORS_ORIGINS` – allowed CORS origins (default `*`)
+- `CORS_ALLOW_CREDENTIALS` – allow credentials in CORS requests
 
 ## Documentation
 
+- [SECURITY_ENHANCEMENTS.md](docs/SECURITY_ENHANCEMENTS.md) - Rate limiting, file scanning, API authentication, security headers
 - [BACKGROUND_JOBS.md](docs/BACKGROUND_JOBS.md) - Job priorities, cancellation, and management
 - [STRUCTURED_LOGGING.md](docs/STRUCTURED_LOGGING.md) - Logging infrastructure and best practices
 - [METRICS.md](docs/METRICS.md) - Prometheus metrics, queries, and dashboards

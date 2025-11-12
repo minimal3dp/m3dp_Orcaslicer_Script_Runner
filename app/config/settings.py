@@ -55,6 +55,50 @@ class Settings:
         self.MIN_EXTRUSION_MULTIPLIER: float = 1.0
         self.MAX_EXTRUSION_MULTIPLIER: float = 1.2
 
+        # Security Configuration - Rate Limiting
+        self.RATE_LIMIT_ENABLED: bool = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
+        self.RATE_LIMIT_UPLOAD: str = os.getenv("RATE_LIMIT_UPLOAD", "10/minute")
+        self.RATE_LIMIT_STATUS: str = os.getenv("RATE_LIMIT_STATUS", "30/minute")
+        self.RATE_LIMIT_DOWNLOAD: str = os.getenv("RATE_LIMIT_DOWNLOAD", "20/minute")
+        self.RATE_LIMIT_CANCEL: str = os.getenv("RATE_LIMIT_CANCEL", "15/minute")
+        self.RATE_LIMIT_GLOBAL: str = os.getenv("RATE_LIMIT_GLOBAL", "100/minute")
+
+        # Security Configuration - Request Size Limits
+        self.REQUEST_SIZE_LIMIT_ENABLED: bool = (
+            os.getenv("REQUEST_SIZE_LIMIT_ENABLED", "true").lower() == "true"
+        )
+        self.MAX_HEADER_SIZE_KB: int = int(os.getenv("MAX_HEADER_SIZE_KB", "16"))
+        self.MAX_REQUEST_BODY_MB: int = int(os.getenv("MAX_REQUEST_BODY_MB", "100"))
+
+        # Security Configuration - File Content Scanning
+        self.FILE_SCANNING_ENABLED: bool = (
+            os.getenv("FILE_SCANNING_ENABLED", "true").lower() == "true"
+        )
+        self.FILE_SCANNING_STRICT_MODE: bool = (
+            os.getenv("FILE_SCANNING_STRICT_MODE", "false").lower() == "true"
+        )
+
+        # Security Configuration - API Authentication (Optional)
+        self.API_AUTH_ENABLED: bool = os.getenv("API_AUTH_ENABLED", "false").lower() == "true"
+        self.API_AUTH_REQUIRED: bool = os.getenv("API_AUTH_REQUIRED", "false").lower() == "true"
+        self.API_KEY_HEADER: str = os.getenv("API_KEY_HEADER", "X-API-Key")
+        # Format: key1:hash1,key2:hash2
+        api_keys_str = os.getenv("API_KEYS", "")
+        self.API_KEYS: dict[str, str] = {}
+        if api_keys_str:
+            for pair in api_keys_str.split(","):
+                if ":" in pair:
+                    key_name, key_hash = pair.split(":", 1)
+                    self.API_KEYS[key_name.strip()] = key_hash.strip()
+
+        # Security Configuration - Security Headers
+        self.SECURITY_HEADERS_ENABLED: bool = (
+            os.getenv("SECURITY_HEADERS_ENABLED", "true").lower() == "true"
+        )
+        self.HSTS_ENABLED: bool = os.getenv("HSTS_ENABLED", "false").lower() == "true"
+        self.HSTS_MAX_AGE: int = int(os.getenv("HSTS_MAX_AGE", "31536000"))  # 1 year
+        self.CSP_ENABLED: bool = os.getenv("CSP_ENABLED", "true").lower() == "true"
+
         # Create necessary directories
         self.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
         self.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
