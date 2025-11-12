@@ -178,10 +178,14 @@ Develop a web application that allows users to upload G-code files, apply the Br
     - Support both async (production) and sync (test) file operations
     - Clean up partial uploads automatically on validation failures
     - Note: Chunked/resumable uploads deferred to Phase 4 (advanced scalability)
-- [ ] Add structured logging
+- [x] Add structured logging ✅
     - Use structured logging format (JSON) for better parsing
     - Add request IDs for tracing requests across services
     - Log key metrics (processing time, file sizes, error rates)
+    - Implemented JSON/human-readable formatters with request ID tracking
+    - Added PerformanceLogger for automatic operation timing
+    - Updated all routers and services with contextual logging
+    - Environment variables: JSON_LOGS (true/false), LOG_LEVEL (INFO/DEBUG/etc.)
 - [ ] Enhance monitoring and observability
     - Add application metrics (Prometheus-compatible)
     - Track job queue depth and processing times

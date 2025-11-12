@@ -94,6 +94,10 @@ async def get_job_status(job_id: str) -> JobStatusResponse:
     svc = get_processing_service()
     job = svc.get_job(job_id)
     if job is None:
+        logger.warning(
+            "Job status check failed: job not found",
+            extra={"context": {"job_id": job_id}},
+        )
         body = {
             "type": "about:blank",
             "title": "Job not found",
@@ -101,6 +105,17 @@ async def get_job_status(job_id: str) -> JobStatusResponse:
             "detail": "Job not found",
         }
         return JSONResponse(status_code=404, content=body)
+
+    logger.info(
+        f"Job status retrieved: {job.filename}",
+        extra={
+            "context": {
+                "job_id": job.job_id,
+                "filename": job.filename,
+                "status": job.status,
+            }
+        },
+    )
     return JobStatusResponse(
         job_id=job.job_id,
         filename=job.filename,
@@ -199,6 +214,10 @@ async def download_processed_file(job_id: str):
     svc = get_processing_service()
     job = svc.get_job(job_id)
     if job is None:
+        logger.warning(
+            "Download failed: job not found",
+            extra={"context": {"job_id": job_id}},
+        )
         body = {
             "type": "about:blank",
             "title": "Job not found",
@@ -207,6 +226,16 @@ async def download_processed_file(job_id: str):
         }
         return JSONResponse(status_code=404, content=body)
     if job.status != JobStatus.COMPLETED:
+        logger.warning(
+            f"Download failed: job not ready ({job.status})",
+            extra={
+                "context": {
+                    "job_id": job_id,
+                    "filename": job.filename,
+                    "status": job.status,
+                }
+            },
+        )
         body = {
             "type": "about:blank",
             "title": "Job not ready",
@@ -215,6 +244,16 @@ async def download_processed_file(job_id: str):
         }
         return JSONResponse(status_code=409, content=body)
     if not job.output_path or not Path(job.output_path).exists():
+        logger.error(
+            "Download failed: processed file missing",
+            extra={
+                "context": {
+                    "job_id": job_id,
+                    "filename": job.filename,
+                    "expected_path": str(job.output_path) if job.output_path else None,
+                }
+            },
+        )
         body = {
             "type": "about:blank",
             "title": "Processed file not found",
@@ -222,6 +261,8 @@ async def download_processed_file(job_id: str):
             "detail": "Processed file not found",
         }
         return JSONResponse(status_code=404, content=body)
+
+    output_size = Path(job.output_path).stat().st_size
 
     # Prepare response first (do not delete processed output yet to allow potential re-downloads)
     response = FileResponse(
@@ -233,10 +274,40 @@ async def download_processed_file(job_id: str):
     # Post-download cleanup: remove original uploaded file to save space
     if job.upload_path and Path(job.upload_path).exists():
         try:
+            upload_size = Path(job.upload_path).stat().st_size
             Path(job.upload_path).unlink()
-            logger.info("Upload file cleaned after download for job %s", job.job_id)
+            logger.info(
+                f"Upload file cleaned after download: {job.filename}",
+                extra={
+                    "context": {
+                        "job_id": job.job_id,
+                        "filename": job.filename,
+                        "upload_size_bytes": upload_size,
+                    }
+                },
+            )
         except OSError as e:
-            logger.warning("Failed to delete upload file for job %s: %s", job.job_id, e)
+            logger.warning(
+                f"Failed to delete upload file: {job.filename}",
+                extra={
+                    "context": {
+                        "job_id": job.job_id,
+                        "filename": job.filename,
+                        "error": str(e),
+                    }
+                },
+            )
 
-    logger.info("Download served for job %s -> %s", job.job_id, job.output_path)
+    logger.info(
+        f"File download served: {job.filename}",
+        extra={
+            "context": {
+                "job_id": job.job_id,
+                "filename": job.filename,
+                "output_filename": f"{Path(job.filename).stem}_processed.gcode",
+                "file_size_bytes": output_size,
+                "file_size_mb": round(output_size / (1024 * 1024), 2),
+            }
+        },
+    )
     return response

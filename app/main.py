@@ -6,17 +6,26 @@ It provides a REST API for uploading G-code files, processing them with
 the BrickLayers post-processing script, and downloading the results.
 """
 
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.logging_config import configure_logging
+from app.middleware import RequestLoggingMiddleware
 from app.routers import health_router, jobs_router, upload_router
 from app.services.cleanup_service import get_cleanup_service
 
 # Initialize settings
 settings = get_settings()
+
+# Configure structured logging
+configure_logging(
+    json_logs=os.getenv("JSON_LOGS", "false").lower() == "true",
+    log_level=os.getenv("LOG_LEVEL", "INFO"),
+)
 
 
 @asynccontextmanager
@@ -41,6 +50,9 @@ app = FastAPI(
     debug=settings.DEBUG,
     lifespan=lifespan,
 )
+
+# Add request logging middleware (before CORS)
+app.add_middleware(RequestLoggingMiddleware)
 
 # Configure CORS with settings
 app.add_middleware(

@@ -182,11 +182,20 @@ async def upload_file(
         )
         # Use background task to enforce timeout without blocking request
         background_tasks.add_task(processing_service.process_with_timeout, job_id)
+
+        # Log upload with structured metadata
         logger.info(
-            "Upload %s queued for processing (start_at_layer=%d, extrusion_multiplier=%.3f)",
-            job_id,
-            start_at_layer,
-            extrusion_multiplier,
+            f"File uploaded and queued: {file.filename}",
+            extra={
+                "context": {
+                    "job_id": job_id,
+                    "filename": file.filename,
+                    "file_size_bytes": saved_size,
+                    "file_size_mb": round(saved_size / (1024 * 1024), 2),
+                    "start_at_layer": start_at_layer,
+                    "extrusion_multiplier": extrusion_multiplier,
+                }
+            },
         )
 
         return UploadResponse(
@@ -199,6 +208,16 @@ async def upload_file(
         )
 
     except FileTooLargeError as e:
+        logger.warning(
+            f"File too large: {file.filename}",
+            extra={
+                "context": {
+                    "job_id": job_id,
+                    "filename": file.filename,
+                    "error": str(e),
+                }
+            },
+        )
         body = {
             "type": "about:blank",
             "title": "File too large",
@@ -207,6 +226,16 @@ async def upload_file(
         }
         return JSONResponse(status_code=status.HTTP_413_CONTENT_TOO_LARGE, content=body)
     except FileValidationError as e:
+        logger.warning(
+            f"File validation failed: {file.filename}",
+            extra={
+                "context": {
+                    "job_id": job_id,
+                    "filename": file.filename,
+                    "error": str(e),
+                }
+            },
+        )
         body = {
             "type": "about:blank",
             "title": "Invalid file or parameters",
@@ -223,6 +252,17 @@ async def upload_file(
         except Exception:
             pass
 
+        logger.error(
+            f"Upload error: {file.filename}",
+            extra={
+                "context": {
+                    "job_id": job_id,
+                    "filename": file.filename or "unknown",
+                    "error": str(e),
+                }
+            },
+            exc_info=True,
+        )
         body = {
             "type": "about:blank",
             "title": "Upload error",

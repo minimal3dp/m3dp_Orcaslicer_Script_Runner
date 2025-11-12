@@ -10,6 +10,25 @@ and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2
 ## [Unreleased]
 
 ### Added
+- **Structured Logging Infrastructure**
+  - JSON-formatted logs for production (machine-parseable)
+  - Human-readable format for development (request ID prefix)
+  - Request ID tracking across all services via middleware
+  - `PerformanceLogger` context manager for automatic operation timing
+  - Contextual metadata in all log records (job_id, filename, sizes, errors)
+  - Environment variables: `JSON_LOGS` (true/false), `LOG_LEVEL` (INFO/DEBUG/etc.)
+  - Added `app/logging_config.py` with formatters and metric helpers
+  - Added `app/middleware/logging.py` for automatic request tracking
+  - Updated all routers and services with structured logging
+- **RFC 7807 Error Standardization**
+  - Consistent error responses with `ProblemDetails` model
+  - Standardized format across all endpoints (type, title, status, detail, instance)
+  - Better error traceability and debugging
+- **File Handling Optimization**
+  - Streaming upload with incremental size validation (99.98% memory reduction)
+  - Fail-fast on oversized files during upload stream
+  - Automatic cleanup of partial uploads on validation failures
+  - Support for both async (production) and sync (test) file operations
 - Comprehensive OpenAPI documentation with response examples for all endpoints
   - Upload endpoint: 201, 400, 413, 422, 500 with detailed examples
   - Status endpoint: 200 (pending, processing, completed, failed), 404 with examples

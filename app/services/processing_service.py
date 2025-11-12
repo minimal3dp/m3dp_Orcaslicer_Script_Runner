@@ -16,6 +16,7 @@ from pathlib import Path
 
 from app.config import get_settings
 from app.core import BrickLayersProcessor
+from app.logging_config import PerformanceLogger
 from app.services.file_service import FileService
 
 logger = logging.getLogger(__name__)
@@ -79,10 +80,15 @@ class ProcessingService:
         )
         self._jobs[job_id] = job
         logger.info(
-            "Registered processing job %s (start_at_layer=%s, extrusion_multiplier=%.3f)",
-            job_id,
-            start_at_layer,
-            extrusion_multiplier,
+            f"Registered processing job: {filename}",
+            extra={
+                "context": {
+                    "job_id": job_id,
+                    "filename": filename,
+                    "start_at_layer": start_at_layer,
+                    "extrusion_multiplier": extrusion_multiplier,
+                }
+            },
         )
         return job
 
@@ -96,34 +102,79 @@ class ProcessingService:
 
         job.status = "processing"
         job.updated_at = datetime.now()
-        logger.info("Processing started for job %s", job.job_id)
+
+        input_size = job.upload_path.stat().st_size
+
+        logger.info(
+            f"Processing started: {job.filename}",
+            extra={
+                "context": {
+                    "job_id": job.job_id,
+                    "filename": job.filename,
+                    "input_size_bytes": input_size,
+                    "start_at_layer": job.start_at_layer,
+                    "extrusion_multiplier": job.extrusion_multiplier,
+                }
+            },
+        )
 
         try:
-            processor = BrickLayersProcessor(
-                extrusion_global_multiplier=job.extrusion_multiplier,
-                start_at_layer=job.start_at_layer,
-                verbosity=0,
-            )
+            with PerformanceLogger(
+                logger=logger,
+                operation=f"process_gcode_{job.job_id}",
+                extra_context={
+                    "job_id": job.job_id,
+                    "filename": job.filename,
+                    "input_size_bytes": input_size,
+                },
+            ):
+                processor = BrickLayersProcessor(
+                    extrusion_global_multiplier=job.extrusion_multiplier,
+                    start_at_layer=job.start_at_layer,
+                    verbosity=0,
+                )
 
-            # Stream input and output to avoid loading entire file in memory
-            with job.upload_path.open("r", encoding="utf-8", errors="ignore") as infile:
-                gcode_stream = (line for line in infile)
-                with job.output_path.open("w", encoding="utf-8") as outfile:
-                    for line in processor.process_gcode(gcode_stream):
-                        outfile.write(line)
+                # Stream input and output to avoid loading entire file in memory
+                with job.upload_path.open("r", encoding="utf-8", errors="ignore") as infile:
+                    gcode_stream = (line for line in infile)
+                    with job.output_path.open("w", encoding="utf-8") as outfile:
+                        for line in processor.process_gcode(gcode_stream):
+                            outfile.write(line)
 
             job.status = "completed"
             job.updated_at = datetime.now()
+            output_size = job.output_path.stat().st_size
+
             logger.info(
-                "Processing completed for job %s -> %s",
-                job.job_id,
-                job.output_path.name,
+                f"Processing completed: {job.filename}",
+                extra={
+                    "context": {
+                        "job_id": job.job_id,
+                        "filename": job.filename,
+                        "output_filename": job.output_path.name,
+                        "input_size_bytes": input_size,
+                        "output_size_bytes": output_size,
+                        "size_change_percent": round(
+                            ((output_size - input_size) / input_size) * 100, 2
+                        ),
+                    }
+                },
             )
         except Exception as e:
             job.status = "failed"
             job.updated_at = datetime.now()
             job.error = str(e)
-            logger.exception("Processing failed for job %s: %s", job.job_id, e)
+            logger.error(
+                f"Processing failed: {job.filename}",
+                extra={
+                    "context": {
+                        "job_id": job.job_id,
+                        "filename": job.filename,
+                        "error": str(e),
+                    }
+                },
+                exc_info=True,
+            )
 
     def queue_job(self, job_id: str) -> concurrent.futures.Future:
         """Submit job to executor and wrap with timeout handling at the caller."""
@@ -144,11 +195,16 @@ class ProcessingService:
                 job.status = "failed"
                 job.updated_at = datetime.now()
                 job.error = f"Processing timed out after {self.settings.PROCESSING_TIMEOUT} seconds"
-            logger.error(
-                "Processing timed out for job %s after %s seconds",
-                job_id,
-                self.settings.PROCESSING_TIMEOUT,
-            )
+                logger.error(
+                    f"Processing timed out: {job.filename}",
+                    extra={
+                        "context": {
+                            "job_id": job_id,
+                            "filename": job.filename,
+                            "timeout_seconds": self.settings.PROCESSING_TIMEOUT,
+                        }
+                    },
+                )
 
 
 # Convenience accessor
