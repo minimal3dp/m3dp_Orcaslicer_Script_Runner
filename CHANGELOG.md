@@ -10,6 +10,15 @@ and this project will adhere to [Semantic Versioning](https://semver.org/spec/v2
 ## [Unreleased]
 
 ### Added
+- **Background Job Enhancements**
+  - Job priority support (0=high, 1=normal, 2=low) on upload endpoint
+  - Job cancellation endpoint (`POST /cancel/{job_id}`)
+  - Cooperative cancellation with graceful handling (checks every 1000 lines during processing)
+  - Automatic cleanup of partial output files on cancellation
+  - Enhanced job statuses: "cancelling" for processing jobs being cancelled
+  - Comprehensive evaluation of task queue options documented in `docs/BACKGROUND_JOBS_EVALUATION.md`
+  - Decision to enhance current ThreadPoolExecutor system (0 dependencies, proven scale)
+  - Migration path documented for future scaling needs (>1000 jobs/day)
 - **Prometheus Metrics & Observability**
   - `/metrics` endpoint exposing Prometheus-compatible metrics
   - HTTP request metrics (count, duration, status codes by endpoint)

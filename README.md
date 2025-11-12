@@ -6,8 +6,12 @@ Process G-code files with the BrickLayers post-processing script via a simple Fa
 
 - Upload G-code files (.gcode, .gco, .g) with validation
 - Background processing using the BrickLayers engine
+- **Job priorities** (0=high, 1=normal, 2=low) for workflow control
+- **Job cancellation** with cooperative graceful handling
 - Job lifecycle and status endpoint
 - Download processed G-code when complete
+- **Structured logging** with JSON output and request tracking
+- **Prometheus metrics** for monitoring and observability
 - Configurable limits (file size, timeout, concurrency)
 
 ## Project structure
@@ -23,16 +27,26 @@ Process G-code files with the BrickLayers post-processing script via a simple Fa
 ## API overview
 
 - POST `/api/v1/upload`
-	- Form fields: `file` (G-code), `start_at_layer` (int, default 3), `extrusion_multiplier` (float, 1.0–1.2, default 1.05)
-	- Response: `201 Created` with `{ job_id, status, ... }`
+	- Form fields: `file` (G-code), `start_at_layer` (int, default 3), `extrusion_multiplier` (float, 1.0–1.2, default 1.05), `priority` (int, 0-2, default 1)
+	- Response: `202 Accepted` with `{ job_id, status, priority, ... }`
 	- Errors: `400` for validation errors; `413` if file exceeds `MAX_UPLOAD_SIZE`
 
 - GET `/api/v1/status/{job_id}`
-	- Response: `200 OK` with `{ job_id, filename, status, created_at, updated_at, error }`
+	- Response: `200 OK` with `{ job_id, status, priority, cancel_requested, created_at, started_at, completed_at, error, ... }`
+
+- POST `/api/v1/cancel/{job_id}`
+	- Cancels a pending or processing job
+	- Response: `200 OK` with `{ job_id, status, message }`
+	- Errors: `404` if job not found; `409` if job already completed/failed
 
 - GET `/api/v1/download/{job_id}`
 	- Response: `200 OK` streaming processed G-code with Content-Disposition filename
 	- Errors: `409` if not completed; `404` if job/file missing
+
+- GET `/metrics`
+	- Prometheus-compatible metrics endpoint for monitoring
+
+See [docs/BACKGROUND_JOBS.md](docs/BACKGROUND_JOBS.md) for detailed API documentation.
 
 ## Run locally
 
@@ -70,7 +84,16 @@ Configure via environment variables (defaults in `app/config/settings.py`):
 - `UPLOAD_DIR`, `OUTPUT_DIR` – default `temp/uploads`, `temp/outputs`
 - `FILE_RETENTION_HOURS` – age after which temp files are deleted by the cleanup task (default 24h)
 - `CLEANUP_INTERVAL_MINUTES` – how often the cleanup task runs (default 60m)
+- `JSON_LOGS` (true/false) – enable JSON-formatted structured logging (default false)
+- `LOG_LEVEL` (DEBUG/INFO/WARNING/ERROR) – logging verbosity (default INFO)
 - CORS settings via `CORS_ORIGINS`, `CORS_ALLOW_*`
+
+## Documentation
+
+- [BACKGROUND_JOBS.md](docs/BACKGROUND_JOBS.md) - Job priorities, cancellation, and management
+- [STRUCTURED_LOGGING.md](docs/STRUCTURED_LOGGING.md) - Logging infrastructure and best practices
+- [METRICS.md](docs/METRICS.md) - Prometheus metrics, queries, and dashboards
+- [BACKGROUND_JOBS_EVALUATION.md](docs/BACKGROUND_JOBS_EVALUATION.md) - Task queue evaluation and decision rationale
 
 ## Notes and known gaps
 

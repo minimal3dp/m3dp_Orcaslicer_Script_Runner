@@ -134,6 +134,12 @@ async def upload_file(
         le=1.2,
         description="Extrusion multiplier for brick layers",
     ),
+    priority: int = Form(
+        default=1,
+        ge=0,
+        le=2,
+        description="Job priority (0=high, 1=normal, 2=low)",
+    ),
 ) -> UploadResponse:
     """Upload a G-code file for BrickLayers processing.
 
@@ -180,6 +186,7 @@ async def upload_file(
             filename=file.filename,
             start_at_layer=start_at_layer,
             extrusion_multiplier=extrusion_multiplier,
+            priority=priority,
         )
         # Use background task to enforce timeout without blocking request
         background_tasks.add_task(processing_service.process_with_timeout, job_id)

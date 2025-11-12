@@ -197,10 +197,14 @@ Develop a web application that allows users to upload G-code files, apply the Br
     - Track downloads (success/failure rates)
     - Track cleanup (files deleted, bytes freed, errors)
     - Automatic metric collection via middleware and service integrations
-- [ ] Consider background job improvements
-    - Evaluate moving to proper task queue (Celery, RQ, or Dramatiq)
-    - Add job priority support
-    - Implement job cancellation endpoint
+- [x] Consider background job improvements ✅ **COMPLETED 2025-01-XX**
+    - [x] Evaluated task queue options (Celery, RQ, Dramatiq vs. current ThreadPoolExecutor)
+    - [x] Decision: Enhance current system (0 dependencies, proven scale up to 500 jobs/day)
+    - [x] Added job priority support (0=high, 1=normal, 2=low) - dataclass, registration, upload endpoint
+    - [x] Implemented job cancellation endpoint (POST /cancel/{job_id})
+    - [x] Cooperative cancellation with graceful handling (checks every 1000 lines, cleans up partial files)
+    - [x] Comprehensive evaluation documented in docs/BACKGROUND_JOBS_EVALUATION.md
+    - [x] Migration path identified if traffic grows beyond current capacity
 - [ ] Security enhancements
     - Add request rate limiting per IP
     - Implement file content scanning for malicious patterns

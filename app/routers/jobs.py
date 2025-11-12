@@ -318,3 +318,112 @@ async def download_processed_file(job_id: str):
         },
     )
     return response
+
+
+@router.post(
+    "/cancel/{job_id}",
+    responses={
+        200: {
+            "description": "Job cancellation requested",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "job_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "status": "cancelling",
+                        "message": "Job cancellation requested",
+                    }
+                }
+            },
+        },
+        404: {
+            "model": ProblemDetails,
+            "description": "Job not found",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "type": "about:blank",
+                        "title": "Job not found",
+                        "status": 404,
+                        "detail": "Job not found",
+                    }
+                }
+            },
+        },
+        409: {
+            "model": ProblemDetails,
+            "description": "Job cannot be cancelled",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "type": "about:blank",
+                        "title": "Cannot cancel job",
+                        "status": 409,
+                        "detail": "Job is already completed and cannot be cancelled",
+                    }
+                }
+            },
+        },
+    },
+)
+async def cancel_job(job_id: str):
+    """Cancel a pending or processing job.
+
+    Args:
+        job_id: Job identifier to cancel
+
+    Returns:
+        Cancellation confirmation
+    """
+    svc = get_processing_service()
+    job = svc.get_job(job_id)
+
+    if job is None:
+        logger.warning(
+            "Cancel failed: job not found",
+            extra={"context": {"job_id": job_id}},
+        )
+        body = {
+            "type": "about:blank",
+            "title": "Job not found",
+            "status": 404,
+            "detail": "Job not found",
+        }
+        return JSONResponse(status_code=404, content=body)
+
+    success = svc.cancel_job(job_id)
+
+    if not success:
+        logger.warning(
+            f"Cancel failed: job cannot be cancelled ({job.status})",
+            extra={
+                "context": {
+                    "job_id": job_id,
+                    "filename": job.filename,
+                    "status": job.status,
+                }
+            },
+        )
+        body = {
+            "type": "about:blank",
+            "title": "Cannot cancel job",
+            "status": 409,
+            "detail": f"Job is already {job.status} and cannot be cancelled",
+        }
+        return JSONResponse(status_code=409, content=body)
+
+    logger.info(
+        f"Job cancellation requested: {job.filename}",
+        extra={
+            "context": {
+                "job_id": job_id,
+                "filename": job.filename,
+                "status": job.status,
+            }
+        },
+    )
+
+    return {
+        "job_id": job_id,
+        "status": job.status,
+        "message": "Job cancellation requested" if job.status == "cancelling" else "Job cancelled",
+    }

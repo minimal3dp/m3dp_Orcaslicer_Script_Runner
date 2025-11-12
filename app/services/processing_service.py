@@ -29,12 +29,14 @@ class ProcessingJob:
     filename: str  # original filename
     start_at_layer: int
     extrusion_multiplier: float
+    priority: int = 1  # 0=high, 1=normal, 2=low
     status: str = "pending"
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
     error: str | None = None
     upload_path: Path | None = None
     output_path: Path | None = None
+    cancel_requested: bool = False  # Flag for graceful cancellation
 
 
 class ProcessingService:
@@ -65,8 +67,17 @@ class ProcessingService:
         filename: str,
         start_at_layer: int,
         extrusion_multiplier: float,
+        priority: int = 1,
     ) -> ProcessingJob:
-        """Register a job in memory before queuing it."""
+        """Register a job in memory before queuing it.
+
+        Args:
+            job_id: Unique job identifier
+            filename: Original filename
+            start_at_layer: Layer to start processing
+            extrusion_multiplier: Extrusion multiplier
+            priority: Job priority (0=high, 1=normal, 2=low)
+        """
         upload_path = self.file_service.get_upload_path(job_id, filename)
         output_path = self.file_service.get_output_path(job_id, filename)
 
@@ -75,6 +86,7 @@ class ProcessingService:
             filename=filename,
             start_at_layer=start_at_layer,
             extrusion_multiplier=extrusion_multiplier,
+            priority=priority,
             status="pending",
             upload_path=upload_path,
             output_path=output_path,
@@ -88,6 +100,7 @@ class ProcessingService:
                     "filename": filename,
                     "start_at_layer": start_at_layer,
                     "extrusion_multiplier": extrusion_multiplier,
+                    "priority": priority,
                 }
             },
         )
@@ -95,6 +108,46 @@ class ProcessingService:
 
     def get_job(self, job_id: str) -> ProcessingJob | None:
         return self._jobs.get(job_id)
+
+    def cancel_job(self, job_id: str) -> bool:
+        """Request cancellation of a job.
+
+        Args:
+            job_id: Job identifier to cancel
+
+        Returns:
+            True if cancellation was requested, False if job not found or already terminal
+        """
+        job = self.get_job(job_id)
+        if job is None:
+            return False
+
+        # Can only cancel pending or processing jobs
+        if job.status in ("completed", "failed", "timeout", "cancelled"):
+            return False
+
+        # Set cancellation flag
+        job.cancel_requested = True
+
+        if job.status == "pending":
+            # Job hasn't started yet, mark as cancelled immediately
+            job.status = "cancelled"
+            job.updated_at = datetime.now()
+            job.error = "Cancelled by user"
+            logger.info(
+                f"Job cancelled: {job.filename}",
+                extra={"context": {"job_id": job_id, "filename": job.filename}},
+            )
+        else:
+            # Job is processing, it will check the flag
+            job.status = "cancelling"
+            job.updated_at = datetime.now()
+            logger.info(
+                f"Job cancellation requested: {job.filename}",
+                extra={"context": {"job_id": job_id, "filename": job.filename}},
+            )
+
+        return True
 
     def _run_processing(self, job: ProcessingJob) -> None:
         """Worker function that performs the processing for a job."""
@@ -137,11 +190,39 @@ class ProcessingService:
                 )
 
                 # Stream input and output to avoid loading entire file in memory
+                # Check for cancellation periodically
                 with job.upload_path.open("r", encoding="utf-8", errors="ignore") as infile:
                     gcode_stream = (line for line in infile)
                     with job.output_path.open("w", encoding="utf-8") as outfile:
-                        for line in processor.process_gcode(gcode_stream):
+                        for line_count, line in enumerate(processor.process_gcode(gcode_stream)):
+                            # Check cancellation every 1000 lines
+                            if line_count % 1000 == 0 and job.cancel_requested:
+                                job.status = "cancelled"
+                                job.updated_at = datetime.now()
+                                job.error = "Cancelled by user during processing"
+                                # Clean up partial output
+                                if job.output_path.exists():
+                                    job.output_path.unlink()
+                                logger.info(
+                                    f"Job cancelled during processing: {job.filename}",
+                                    extra={
+                                        "context": {
+                                            "job_id": job.job_id,
+                                            "filename": job.filename,
+                                        }
+                                    },
+                                )
+                                return
                             outfile.write(line)
+
+            # Check one final time before marking complete
+            if job.cancel_requested:
+                job.status = "cancelled"
+                job.updated_at = datetime.now()
+                job.error = "Cancelled by user"
+                if job.output_path.exists():
+                    job.output_path.unlink()
+                return
 
             job.status = "completed"
             job.updated_at = datetime.now()
