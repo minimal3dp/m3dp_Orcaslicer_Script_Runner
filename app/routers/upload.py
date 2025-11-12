@@ -4,10 +4,11 @@ import logging
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, File, Form, UploadFile, status
+from fastapi.responses import JSONResponse
 
-from app.models.processing import ErrorResponse
-from app.models.upload import UploadResponse, ValidationError
+from app.models import ProblemDetails
+from app.models.upload import UploadResponse
 from app.services.file_service import FileService, FileTooLargeError, FileValidationError
 from app.services.processing_service import get_processing_service
 
@@ -37,7 +38,7 @@ router = APIRouter(prefix="/api/v1", tags=["upload"])
             },
         },
         400: {
-            "model": ValidationError,
+            "model": ProblemDetails,
             "description": "Invalid file or parameters",
             "content": {
                 "application/json": {
@@ -45,25 +46,28 @@ router = APIRouter(prefix="/api/v1", tags=["upload"])
                         "invalid_extension": {
                             "summary": "Invalid file extension",
                             "value": {
-                                "detail": {
-                                    "error": "validation_error",
-                                    "message": "File extension '.txt' not allowed. Allowed extensions: .gcode, .gco, .g",
-                                }
+                                "type": "about:blank",
+                                "title": "Invalid file extension",
+                                "status": 400,
+                                "detail": "File extension '.txt' not allowed. Allowed extensions: .gcode, .gco, .g",
                             },
                         },
                         "empty_file": {
                             "summary": "Empty file",
                             "value": {
-                                "detail": {"error": "validation_error", "message": "File is empty"}
+                                "type": "about:blank",
+                                "title": "Empty file",
+                                "status": 400,
+                                "detail": "File is empty",
                             },
                         },
                         "invalid_gcode": {
                             "summary": "Invalid G-code content",
                             "value": {
-                                "detail": {
-                                    "error": "validation_error",
-                                    "message": "File doesn't appear to contain valid G-code. Expected G-code commands and coordinates.",
-                                }
+                                "type": "about:blank",
+                                "title": "Invalid G-code content",
+                                "status": 400,
+                                "detail": "File doesn't appear to contain valid G-code. Expected G-code commands and coordinates.",
                             },
                         },
                     }
@@ -71,15 +75,15 @@ router = APIRouter(prefix="/api/v1", tags=["upload"])
             },
         },
         413: {
-            "model": ErrorResponse,
+            "model": ProblemDetails,
             "description": "File too large",
             "content": {
                 "application/json": {
                     "example": {
-                        "detail": {
-                            "error": "file_too_large",
-                            "message": "File size (75.50MB) exceeds maximum allowed size (50.00MB)",
-                        }
+                        "type": "about:blank",
+                        "title": "File too large",
+                        "status": 413,
+                        "detail": "File size (75.50MB) exceeds maximum allowed size (50.00MB)",
                     }
                 }
             },
@@ -102,15 +106,15 @@ router = APIRouter(prefix="/api/v1", tags=["upload"])
             },
         },
         500: {
+            "model": ProblemDetails,
             "description": "Internal server error",
             "content": {
                 "application/json": {
                     "example": {
-                        "detail": {
-                            "error": "upload_error",
-                            "message": "Failed to process upload",
-                            "details": "Unexpected error details",
-                        }
+                        "type": "about:blank",
+                        "title": "Upload error",
+                        "status": 500,
+                        "detail": "Failed to process upload: Unexpected error details",
                     }
                 }
             },
@@ -159,24 +163,14 @@ async def upload_file(
         file_service.validate_filename(file.filename)
         file_service.validate_file_extension(file.filename)
 
-        # Read first chunk to validate content and check size
-        first_chunk = await file.read(2048)
-        if not first_chunk:
-            raise FileValidationError("File is empty")
+        # Stream file to disk with incremental size validation (memory-efficient)
+        # This validates size during streaming and returns first chunk for content validation
+        _file_path, saved_size, first_chunk = await file_service.save_upload_streaming(
+            job_id, file.filename, file.file, validate_size=True
+        )
 
-        # Validate G-code content
+        # Validate G-code content from first chunk
         file_service.validate_gcode_content(first_chunk)
-
-        # Read rest of file to get size
-        remaining_content = await file.read()
-        total_size = len(first_chunk) + len(remaining_content)
-
-        # Validate file size
-        file_service.validate_file_size(total_size)
-
-        # Reset file position and save
-        await file.seek(0)
-        _file_path, saved_size = file_service.save_upload(job_id, file.filename, file.file)
 
         # Register and queue processing in background
         processing_service = get_processing_service()
@@ -205,15 +199,21 @@ async def upload_file(
         )
 
     except FileTooLargeError as e:
-        raise HTTPException(
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-            detail={"error": "file_too_large", "message": str(e)},
-        ) from e
+        body = {
+            "type": "about:blank",
+            "title": "File too large",
+            "status": status.HTTP_413_CONTENT_TOO_LARGE,
+            "detail": str(e),
+        }
+        return JSONResponse(status_code=status.HTTP_413_CONTENT_TOO_LARGE, content=body)
     except FileValidationError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": "validation_error", "message": str(e)},
-        ) from e
+        body = {
+            "type": "about:blank",
+            "title": "Invalid file or parameters",
+            "status": status.HTTP_400_BAD_REQUEST,
+            "detail": str(e),
+        }
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=body)
 
     except Exception as e:
         # Clean up any partial upload
@@ -223,11 +223,10 @@ async def upload_file(
         except Exception:
             pass
 
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "error": "upload_error",
-                "message": "Failed to process upload",
-                "details": str(e),
-            },
-        ) from e
+        body = {
+            "type": "about:blank",
+            "title": "Upload error",
+            "status": status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "detail": f"Failed to process upload: {e}",
+        }
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=body)

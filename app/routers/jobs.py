@@ -5,10 +5,11 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import APIRouter
+from fastapi.responses import FileResponse, JSONResponse
 
-from app.models.processing import ErrorResponse, JobStatus, JobStatusResponse
+from app.models import ProblemDetails
+from app.models.processing import JobStatus, JobStatusResponse
 from app.services.processing_service import get_processing_service
 
 router = APIRouter(prefix="/api/v1", tags=["jobs"])
@@ -73,11 +74,16 @@ logger = logging.getLogger(__name__)
             },
         },
         404: {
-            "model": ErrorResponse,
+            "model": ProblemDetails,
             "description": "Job not found",
             "content": {
                 "application/json": {
-                    "example": {"detail": {"error": "not_found", "message": "Job not found"}}
+                    "example": {
+                        "type": "about:blank",
+                        "title": "Job not found",
+                        "status": 404,
+                        "detail": "Job not found",
+                    }
                 }
             },
         },
@@ -88,9 +94,13 @@ async def get_job_status(job_id: str) -> JobStatusResponse:
     svc = get_processing_service()
     job = svc.get_job(job_id)
     if job is None:
-        raise HTTPException(
-            status_code=404, detail={"error": "not_found", "message": "Job not found"}
-        )
+        body = {
+            "type": "about:blank",
+            "title": "Job not found",
+            "status": 404,
+            "detail": "Job not found",
+        }
+        return JSONResponse(status_code=404, content=body)
     return JobStatusResponse(
         job_id=job.job_id,
         filename=job.filename,
@@ -122,22 +132,27 @@ async def get_job_status(job_id: str) -> JobStatusResponse:
             },
         },
         404: {
-            "model": ErrorResponse,
+            "model": ProblemDetails,
             "description": "Job or file not found",
             "content": {
                 "application/json": {
                     "examples": {
                         "job_not_found": {
                             "summary": "Job does not exist",
-                            "value": {"detail": {"error": "not_found", "message": "Job not found"}},
+                            "value": {
+                                "type": "about:blank",
+                                "title": "Job not found",
+                                "status": 404,
+                                "detail": "Job not found",
+                            },
                         },
                         "file_missing": {
                             "summary": "Processed file missing",
                             "value": {
-                                "detail": {
-                                    "error": "file_missing",
-                                    "message": "Processed file not found",
-                                }
+                                "type": "about:blank",
+                                "title": "Processed file not found",
+                                "status": 404,
+                                "detail": "Processed file not found",
                             },
                         },
                     }
@@ -145,7 +160,7 @@ async def get_job_status(job_id: str) -> JobStatusResponse:
             },
         },
         409: {
-            "model": ErrorResponse,
+            "model": ProblemDetails,
             "description": "Job not completed",
             "content": {
                 "application/json": {
@@ -153,19 +168,19 @@ async def get_job_status(job_id: str) -> JobStatusResponse:
                         "still_processing": {
                             "summary": "Job still processing",
                             "value": {
-                                "detail": {
-                                    "error": "not_ready",
-                                    "message": "Job status is processing, not ready for download",
-                                }
+                                "type": "about:blank",
+                                "title": "Job not ready",
+                                "status": 409,
+                                "detail": "Job status is processing, not ready for download",
                             },
                         },
                         "job_pending": {
                             "summary": "Job not started",
                             "value": {
-                                "detail": {
-                                    "error": "not_ready",
-                                    "message": "Job status is pending, not ready for download",
-                                }
+                                "type": "about:blank",
+                                "title": "Job not ready",
+                                "status": 409,
+                                "detail": "Job status is pending, not ready for download",
                             },
                         },
                     }
@@ -184,22 +199,29 @@ async def download_processed_file(job_id: str):
     svc = get_processing_service()
     job = svc.get_job(job_id)
     if job is None:
-        raise HTTPException(
-            status_code=404, detail={"error": "not_found", "message": "Job not found"}
-        )
+        body = {
+            "type": "about:blank",
+            "title": "Job not found",
+            "status": 404,
+            "detail": "Job not found",
+        }
+        return JSONResponse(status_code=404, content=body)
     if job.status != JobStatus.COMPLETED:
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "error": "not_ready",
-                "message": f"Job status is {job.status}, not ready for download",
-            },
-        )
+        body = {
+            "type": "about:blank",
+            "title": "Job not ready",
+            "status": 409,
+            "detail": f"Job status is {job.status}, not ready for download",
+        }
+        return JSONResponse(status_code=409, content=body)
     if not job.output_path or not Path(job.output_path).exists():
-        raise HTTPException(
-            status_code=404,
-            detail={"error": "file_missing", "message": "Processed file not found"},
-        )
+        body = {
+            "type": "about:blank",
+            "title": "Processed file not found",
+            "status": 404,
+            "detail": "Processed file not found",
+        }
+        return JSONResponse(status_code=404, content=body)
 
     # Prepare response first (do not delete processed output yet to allow potential re-downloads)
     response = FileResponse(

@@ -165,14 +165,19 @@ Develop a web application that allows users to upload G-code files, apply the Br
     - Test edge cases (empty filenames, special characters, path traversal, null bytes)
     - Test valid boundary values
     - 12 new validation tests added
-- [ ] Improve error handling consistency
+- [x] Improve error handling consistency
     - Standardize error response format across all endpoints
-    - Add error codes enum for client-side error handling
-    - Consider problem details (RFC 7807) format
-- [ ] Optimize file handling
-    - Consider streaming upload validation to avoid reading entire file into memory
-    - Add chunked upload support for very large files
-    - Implement resumable uploads for unreliable connections
+    - Implement RFC 7807-like ProblemDetails model for consistent error responses
+    - Update all routers (upload, status, download) to use ProblemDetails format
+    - Update OpenAPI examples to match new error format
+    - Update tests to expect standardized error shape
+- [x] Optimize file handling
+    - Implement streaming upload with incremental size validation (memory-efficient)
+    - Validate file size during upload stream to fail fast on oversized files
+    - Eliminate duplicate file reads (content + size + save)
+    - Support both async (production) and sync (test) file operations
+    - Clean up partial uploads automatically on validation failures
+    - Note: Chunked/resumable uploads deferred to Phase 4 (advanced scalability)
 - [ ] Add structured logging
     - Use structured logging format (JSON) for better parsing
     - Add request IDs for tracing requests across services

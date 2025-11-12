@@ -189,6 +189,92 @@ class FileService:
         except OSError as e:
             raise FileValidationError(f"Failed to save file: {e}") from e
 
+    async def save_upload_streaming(
+        self, job_id: str, filename: str, file_obj, validate_size: bool = True
+    ) -> tuple[Path, int, bytes]:
+        """Save uploaded file with streaming validation (memory-efficient).
+
+        Streams file to disk while validating size incrementally, avoiding loading
+        entire file into memory. Returns first chunk for content validation.
+
+        Args:
+            job_id: Unique job identifier
+            filename: Sanitized filename
+            file_obj: File object to save (UploadFile or sync file-like object)
+            validate_size: Whether to validate against MAX_UPLOAD_SIZE during streaming
+
+        Returns:
+            Tuple of (file_path, file_size, first_chunk_for_validation)
+
+        Raises:
+            FileTooLargeError: If file exceeds maximum size during streaming
+            FileValidationError: If save fails
+        """
+        try:
+            # Create filename with job ID prefix
+            safe_filename = self.sanitize_filename(filename)
+            file_path = self.settings.UPLOAD_DIR / f"{job_id}_{safe_filename}"
+
+            # Stream file to disk with size validation
+            file_size = 0
+            chunk_size = 8192  # 8KB chunks
+            first_chunk = b""
+            max_size = self.settings.MAX_UPLOAD_SIZE if validate_size else None
+
+            with file_path.open("wb") as f:
+                while True:
+                    # Try async read first, fall back to sync
+                    try:
+                        # Attempt async read
+                        read_result = file_obj.read(chunk_size)
+                        # Check if it's a coroutine (async) or direct result (sync)
+                        import inspect
+
+                        if inspect.iscoroutine(read_result):
+                            chunk = await read_result
+                        else:
+                            chunk = read_result
+                    except (TypeError, AttributeError):
+                        # Sync file object (e.g., in tests)
+                        chunk = file_obj.read(chunk_size)
+
+                    if not chunk:
+                        break
+
+                    # Capture first chunk for content validation
+                    if not first_chunk:
+                        first_chunk = chunk
+
+                    # Validate size incrementally to fail fast
+                    file_size += len(chunk)
+                    if max_size and file_size > max_size:
+                        # Clean up partial file before raising
+                        f.close()
+                        file_path.unlink(missing_ok=True)
+                        max_mb = max_size / (1024 * 1024)
+                        actual_mb = file_size / (1024 * 1024)
+                        raise FileTooLargeError(
+                            f"File size ({actual_mb:.2f}MB) exceeds maximum allowed size ({max_mb:.2f}MB)"
+                        )
+
+                    f.write(chunk)
+
+            # Validate non-empty after streaming complete
+            if file_size == 0:
+                file_path.unlink(missing_ok=True)
+                raise FileValidationError("File is empty")
+
+            return file_path, file_size, first_chunk
+
+        except (FileTooLargeError, FileValidationError):
+            # Re-raise our custom exceptions
+            raise
+        except OSError as e:
+            # Clean up on OS error
+            if file_path.exists():
+                file_path.unlink(missing_ok=True)
+            raise FileValidationError(f"Failed to save file: {e}") from e
+
     def get_upload_path(self, job_id: str, filename: str) -> Path:
         """Get the full path for an uploaded file.
 

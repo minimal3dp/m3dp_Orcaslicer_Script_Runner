@@ -56,7 +56,10 @@ def test_oversized_upload_returns_413():
         resp = client.post("/api/v1/upload", files=files, data=data)
         assert resp.status_code == status.HTTP_413_CONTENT_TOO_LARGE, resp.text
 
-        body = resp.json()
-        # Basic shape check
-        assert body["detail"]["error"] == "file_too_large"
-        assert "exceeds maximum allowed size" in body["detail"]["message"].lower()
+    body = resp.json()
+    # ProblemDetails shape: title/status/detail
+    assert (
+        body["title"].lower().startswith("file too large") or "too large" in body["detail"].lower()
+    )
+    assert body["status"] == status.HTTP_413_CONTENT_TOO_LARGE
+    assert "exceeds maximum allowed size" in body["detail"].lower()

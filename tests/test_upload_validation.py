@@ -78,8 +78,8 @@ def test_invalid_file_extension_rejected():
     resp = client.post("/api/v1/upload", files=files, data=data)
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
     body = resp.json()
-    assert body["detail"]["error"] == "validation_error"
-    assert "extension" in body["detail"]["message"].lower()
+    assert body["status"] == status.HTTP_400_BAD_REQUEST
+    assert "extension" in body["detail"].lower()
 
 
 def test_empty_file_rejected():
@@ -90,8 +90,8 @@ def test_empty_file_rejected():
     resp = client.post("/api/v1/upload", files=files, data=data)
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
     body = resp.json()
-    assert body["detail"]["error"] == "validation_error"
-    assert "empty" in body["detail"]["message"].lower()
+    assert body["status"] == status.HTTP_400_BAD_REQUEST
+    assert "empty" in body["detail"].lower()
 
 
 def test_non_gcode_content_rejected():
@@ -102,8 +102,8 @@ def test_non_gcode_content_rejected():
     resp = client.post("/api/v1/upload", files=files, data=data)
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
     body = resp.json()
-    assert body["detail"]["error"] == "validation_error"
-    assert "g-code" in body["detail"]["message"].lower()
+    assert body["status"] == status.HTTP_400_BAD_REQUEST
+    assert "g-code" in body["detail"].lower()
 
 
 def test_filename_with_path_traversal_rejected():
@@ -115,7 +115,7 @@ def test_filename_with_path_traversal_rejected():
     resp = client.post("/api/v1/upload", files=files, data=data)
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
     body = resp.json()
-    assert body["detail"]["error"] == "validation_error"
+    assert body["status"] == status.HTTP_400_BAD_REQUEST
 
 
 def test_filename_with_null_bytes_rejected():
@@ -127,7 +127,7 @@ def test_filename_with_null_bytes_rejected():
     resp = client.post("/api/v1/upload", files=files, data=data)
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
     body = resp.json()
-    assert body["detail"]["error"] == "validation_error"
+    assert body["status"] == status.HTTP_400_BAD_REQUEST
 
 
 def test_valid_edge_case_parameters():
